@@ -1,0 +1,24 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "landing": {
+    "title": "Home",
+    "welcome": "Welcome"
+  },
+  "cabinet": {
+    "title": "Personal Cabinet",
+    "profile": "Profile"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "dashboard": "Dashboard"
+  }
+}
