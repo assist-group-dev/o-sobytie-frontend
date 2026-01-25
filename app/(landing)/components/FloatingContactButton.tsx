@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Mail, X, Plus } from "lucide-react";
+import { MessageCircle, Mail, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 interface ContactOption {
