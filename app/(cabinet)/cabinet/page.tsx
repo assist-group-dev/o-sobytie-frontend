@@ -1,13 +1,25 @@
+import { Card } from "@/ui/components/Card";
+import { ProfileCard } from "../components/ProfileCard";
+
 export default function CabinetPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-4xl font-bold">Личный кабинет</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Здесь будет ваш личный кабинет
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Личный кабинет</h1>
+        <p className="text-[var(--foreground)]/70">
+          Управляйте своим профилем и настройками
+        </p>
+      </div>
+
+      <div className="grid gap-6">
+        <ProfileCard />
+        
+        <Card>
+          <h2 className="mb-4 text-2xl font-bold">Добро пожаловать!</h2>
+          <p className="text-[var(--foreground)]/70 mb-4">
+            Это ваш личный кабинет. Здесь вы можете управлять заказами, настройками профиля и подпиской.
           </p>
-        </div>
+        </Card>
       </div>
     </div>
   );
