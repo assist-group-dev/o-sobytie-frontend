@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Личный кабинет",
-  description: "Личный кабинет пользователя",
+  title: "Админ панель",
+  description: "Панель администратора",
 };
 
-export default function CabinetLayout({
+export default function AdminLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return <>{children}</>;
 }
+
