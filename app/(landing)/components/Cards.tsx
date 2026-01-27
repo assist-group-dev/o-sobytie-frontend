@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface Tariff {
   id: string;
@@ -129,36 +129,36 @@ export function Cards() {
       <Modal
         isOpen={selectedTariff !== null}
         onClose={() => setSelectedTariff(null)}
-        className="p-0 max-w-6xl"
+        className="p-0 max-w-6xl w-full mx-2 sm:mx-4"
       >
         {selectedTariff && (
-          <div className="grid grid-cols-1 lg:grid-cols-3">
-            <div className="p-8 flex flex-col lg:col-span-1">
-              <div className="mb-6">
-                <div className="flex items-start justify-between mb-4">
-                  <h2 className="text-3xl font-bold uppercase">{selectedTariff.title}</h2>
-                  <span className="text-xl font-bold text-[var(--color-golden)]">{selectedTariff.price}</span>
+          <div className="flex flex-col lg:grid lg:grid-cols-3">
+            <div className="relative h-[250px] sm:h-[300px] lg:hidden order-1">
+              <div className="relative h-full w-full overflow-hidden bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20">
+                <Image
+                  src={selectedTariff.image}
+                  alt={selectedTariff.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            </div>
+
+            <div className="p-4 sm:p-6 lg:p-8 flex flex-col lg:col-span-1 order-2">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold uppercase">{selectedTariff.title}</h2>
+                  <span className="text-lg sm:text-xl font-bold text-[var(--color-golden)] whitespace-nowrap">{selectedTariff.price}</span>
                 </div>
 
-                <p className="text-lg text-[var(--foreground)]/80 mb-6">{selectedTariff.fullDescription}</p>
-
-                <div className="mb-6">
-                  <h3 className="text-sm font-bold uppercase tracking-wider mb-3">Что входит:</h3>
-                  <ul className="space-y-2">
-                    {selectedTariff.details.map((detail, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-[var(--color-golden)] flex-shrink-0 mt-0.5" />
-                        <span className="text-[var(--foreground)]/80">{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <p className="text-base sm:text-lg text-[var(--foreground)]/80 mb-4 sm:mb-6">{selectedTariff.fullDescription}</p>
               </div>
 
-              <div className="flex flex-wrap gap-4 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 mt-auto">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 mt-auto">
                 <Button 
                   size="lg" 
-                  className="uppercase tracking-widest flex-1 min-w-[200px] group/btn transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  className="uppercase tracking-widest w-full sm:flex-1 sm:min-w-[200px] group/btn transition-all duration-300 hover:scale-105 hover:shadow-lg text-sm sm:text-base"
                 >
                   Оформить подписку
                 </Button>
@@ -166,14 +166,14 @@ export function Cards() {
                   variant="outline"
                   size="lg"
                   onClick={() => setSelectedTariff(null)}
-                  className="uppercase tracking-widest group/btn transition-all duration-300 hover:scale-105 hover:border-[var(--color-golden)] hover:text-[var(--color-golden)]"
+                  className="uppercase tracking-widest w-full sm:w-auto group/btn transition-all duration-300 hover:scale-105 hover:border-[var(--color-golden)] hover:text-[var(--color-golden)] text-sm sm:text-base"
                 >
                   Закрыть
                 </Button>
               </div>
             </div>
 
-            <div className="relative h-full min-h-[400px] lg:min-h-[500px] p-8 lg:col-span-2">
+            <div className="hidden lg:block relative h-full min-h-[500px] p-8 lg:col-span-2 order-3">
               <div className="relative h-full w-full overflow-hidden bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20">
                 <Image
                   src={selectedTariff.image}
