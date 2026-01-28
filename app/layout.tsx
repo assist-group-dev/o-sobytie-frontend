@@ -48,6 +48,25 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${inter.variable} antialiased`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const stored = localStorage.getItem('theme-storage');
+                  let theme = 'light';
+                  if (stored) {
+                    const parsed = JSON.parse(stored);
+                    theme = parsed?.state?.theme || 'light';
+                  } else {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  }
+                  document.documentElement.classList.toggle('dark', theme === 'dark');
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <I18nProvider>
           <ThemeProvider>
             <PageScrollArea>{children}</PageScrollArea>
