@@ -119,7 +119,7 @@ export function Cards() {
                   <h3 className="text-xl font-bold uppercase">{tariff.title}</h3>
                   <div className="text-right">
                     {tariff.originalPrice ? (
-                      <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-2">
                         <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
                         <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
                       </div>
@@ -176,11 +176,13 @@ export function Cards() {
                   <h2 className="text-2xl sm:text-3xl font-bold uppercase">{selectedTariff.title}</h2>
                   <div className="text-right">
                     {selectedTariff.originalPrice ? (
-                      <div className="flex flex-col items-end">
-                        <span className="text-sm line-through text-[var(--foreground)]/40">{selectedTariff.originalPrice}</span>
-                        <span className="text-lg sm:text-xl font-bold text-[var(--color-golden)] whitespace-nowrap">{selectedTariff.price}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm line-through text-[var(--foreground)]/40">{selectedTariff.originalPrice}</span>
+                          <span className="text-lg sm:text-xl font-bold text-[var(--color-golden)] whitespace-nowrap">{selectedTariff.price}</span>
+                        </div>
                         {selectedTariff.discount && (
-                          <span className="text-xs text-[var(--color-golden)] mt-1">{selectedTariff.discount}</span>
+                          <span className="text-xs text-[var(--color-golden)]">{selectedTariff.discount}</span>
                         )}
                       </div>
                     ) : (
