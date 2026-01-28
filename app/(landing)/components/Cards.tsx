@@ -12,62 +12,66 @@ interface Tariff {
   description: string;
   fullDescription: string;
   price: string;
+  originalPrice?: string;
+  discount?: string;
   image: string;
   features: string[];
   details: string[];
-  benefitTag?: string;
 }
 
 const TARIFFS: Tariff[] = [
   {
     id: "1-month",
     title: "1 месяц",
-    description: "Попробуйте подписку на месяц. Идеально для первого знакомства с нашими впечатлениями.",
-    fullDescription: "Подписка на 1 месяц — отличный способ попробовать наши коробки с впечатлениями. Вы получите одну коробку с тщательно отобранным содержимым, которое поможет вам открыть что-то новое и получить максимум удовольствия.",
-    price: "от 2 990 ₽",
+    description: "Попробуйте О!СОБЫТИЕ на один месяц. Идеально для первого знакомства.",
+    fullDescription: "Подписка на 1 месяц — это отличный способ познакомиться с форматом О!СОБЫТИЕ. Вы получите одну коробку с тщательно отобранным впечатлением, которое поможет вам открыть что-то новое и получить максимум удовольствия. Если вам понравится, вы всегда сможете продлить подписку на более выгодных условиях.",
+    price: "2 990 ₽",
     image: "/boxes/Box_2.jpg",
-    features: ["1 месяц", "Гибкость", "Пробный период"],
+    features: ["1 коробка", "Гибкая подписка", "Без обязательств"],
     details: [
       "Коробка с готовым впечатлением",
-      "Материалы для медитации и релаксации",
-      "Книги и арт-наборы для творчества",
-      "Сертификаты на спа-процедуры",
-      "Персональные рекомендации по развитию",
+      "Материалы для незабываемого опыта",
+      "Инструкции и рекомендации",
+      "Возможность продления подписки",
+      "Отмена в любой момент",
     ],
   },
   {
-    id: "3-months",
+    id: "3-month",
     title: "3 месяца",
-    description: "Оформите подписку на 3 месяца и получите выгоду. Больше впечатлений, больше экономии.",
-    fullDescription: "Подписка на 3 месяца — оптимальный выбор для тех, кто хочет получить больше впечатлений и сэкономить. Каждый месяц вас ждут уникальные коробки с тщательно отобранным содержимым, которое поможет вам открыть что-то новое и получить максимум удовольствия.",
-    price: "от 2 690 ₽/мес",
+    description: "Три месяца незабываемых впечатлений с выгодой 10%. Лучший выбор для регулярных открытий.",
+    fullDescription: "Подписка на 3 месяца — это оптимальный баланс между гибкостью и выгодой. Вы получаете три коробки с уникальными впечатлениями и экономите 10% от стоимости. Это идеальный вариант для тех, кто хочет регулярно получать новые эмоции и открывать для себя что-то интересное каждый месяц.",
+    price: "8 073 ₽",
+    originalPrice: "8 970 ₽",
+    discount: "Экономия 10%",
     image: "/boxes/Box_1.jpg",
-    features: ["3 месяца", "Экономия", "Больше впечатлений"],
+    features: ["3 коробки", "Экономия 10%", "897 ₽ за месяц"],
     details: [
-      "Коробка с готовым впечатлением каждый месяц",
-      "Материалы для медитации и релаксации",
-      "Книги и арт-наборы для творчества",
-      "Сертификаты на спа-процедуры",
-      "Персональные рекомендации по развитию",
+      "Три коробки с впечатлениями",
+      "Экономия 897 ₽ по сравнению с помесячной оплатой",
+      "Разнообразие активностей и событий",
+      "Приоритетная поддержка",
+      "Возможность заморозки на 1 месяц",
     ],
-    benefitTag: "Экономия 10%",
   },
   {
-    id: "6-months",
+    id: "6-month",
     title: "6 месяцев",
-    description: "Максимальная выгода при оформлении на полгода. Больше месяцев — больше экономии.",
-    fullDescription: "Подписка на 6 месяцев — лучший выбор для тех, кто ценит выгоду и хочет получить максимум впечатлений. Каждый месяц вас ждут уникальные коробки с тщательно отобранным содержимым премиум-класса, которое поможет вам открыть что-то новое и получить максимум удовольствия.",
-    price: "от 2 390 ₽/мес",
+    description: "Полгода впечатлений с максимальной выгодой 20%. Для тех, кто уверен в своём выборе.",
+    fullDescription: "Подписка на 6 месяцев — это максимальная выгода и долгосрочное обещание себе получать незабываемые впечатления. Вы экономите 20% от стоимости и получаете шесть уникальных коробок. Это выбор для тех, кто ценит качество, разнообразие и хочет сделать впечатления частью своей жизни на полгода вперед.",
+    price: "14 352 ₽",
+    originalPrice: "17 940 ₽",
+    discount: "Экономия 20%",
     image: "/boxes/Box_3.jpg",
-    features: ["6 месяцев", "Максимальная выгода", "Премиум впечатления"],
+    features: ["6 коробок", "Экономия 20%", "2 392 ₽ за месяц"],
     details: [
-      "Коробка с готовым впечатлением каждый месяц",
-      "Материалы для медитации и релаксации",
-      "Книги и арт-наборы для творчества",
-      "Сертификаты на спа-процедуры",
-      "Персональные рекомендации по развитию",
+      "Шесть коробок с впечатлениями",
+      "Экономия 3 588 ₽ по сравнению с помесячной оплатой",
+      "Эксклюзивные события и активности",
+      "Приоритетная поддержка 24/7",
+      "Возможность заморозки до 2 месяцев",
+      "Бонусные материалы в каждой коробке",
     ],
-    benefitTag: "Экономия 20%",
   },
 ];
 
@@ -94,10 +98,17 @@ export function Cards() {
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                {tariff.benefitTag && (
+                {tariff.discount && (
                   <div className="absolute top-4 left-4">
                     <span className="bg-[var(--color-golden)] text-black text-xs font-bold px-2 py-1 uppercase tracking-wider">
-                      {tariff.benefitTag}
+                      {tariff.discount}
+                    </span>
+                  </div>
+                )}
+                {!tariff.discount && tariff.id === "1-month" && (
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-[var(--color-cream)]/80 dark:bg-[var(--color-cream)]/60 text-[var(--foreground)] text-xs font-bold px-2 py-1 uppercase tracking-wider">
+                      Попробовать
                     </span>
                   </div>
                 )}
@@ -106,7 +117,16 @@ export function Cards() {
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <h3 className="text-xl font-bold uppercase">{tariff.title}</h3>
-                  <span className="text-sm font-medium text-[var(--foreground)]/50">{tariff.price}</span>
+                  <div className="text-right">
+                    {tariff.originalPrice ? (
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
+                        <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm font-medium text-[var(--foreground)]/50">{tariff.price}</span>
+                    )}
+                  </div>
                 </div>
                 
                 <p className="text-sm text-[var(--foreground)]/60 line-clamp-2">
@@ -154,7 +174,19 @@ export function Cards() {
               <div className="mb-4 sm:mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
                   <h2 className="text-2xl sm:text-3xl font-bold uppercase">{selectedTariff.title}</h2>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--color-golden)] whitespace-nowrap">{selectedTariff.price}</span>
+                  <div className="text-right">
+                    {selectedTariff.originalPrice ? (
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm line-through text-[var(--foreground)]/40">{selectedTariff.originalPrice}</span>
+                        <span className="text-lg sm:text-xl font-bold text-[var(--color-golden)] whitespace-nowrap">{selectedTariff.price}</span>
+                        {selectedTariff.discount && (
+                          <span className="text-xs text-[var(--color-golden)] mt-1">{selectedTariff.discount}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-lg sm:text-xl font-bold text-[var(--color-golden)] whitespace-nowrap">{selectedTariff.price}</span>
+                    )}
+                  </div>
                 </div>
 
                 <p className="text-base sm:text-lg text-[var(--foreground)]/80 mb-4 sm:mb-6">{selectedTariff.fullDescription}</p>
