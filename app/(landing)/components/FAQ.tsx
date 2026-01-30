@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 interface FAQItem {
@@ -96,6 +96,8 @@ const CATEGORIES = [
 export function FAQ() {
   const [openCategory, setOpenCategory] = useState<string>(CATEGORIES[0]);
   const [selectedId, setSelectedId] = useState<string>(FAQ_ITEMS[0].id);
+  const [openItemId, setOpenItemId] = useState<string | null>(null);
+  const [openCategoryName, setOpenCategoryName] = useState<string | null>(null);
   const selectedItem = FAQ_ITEMS.find((item) => item.id === selectedId) || FAQ_ITEMS[0];
 
   const handleCategoryToggle = (category: string) => {
@@ -109,11 +111,99 @@ export function FAQ() {
     }
   };
 
+  const handleItemToggle = (itemId: string) => {
+    setOpenItemId((prev) => (prev === itemId ? null : itemId));
+  };
+
+  const handleMobileCategoryToggle = (category: string) => {
+    setOpenCategoryName((prev) => {
+      const newCategory = prev === category ? null : category;
+      if (newCategory !== prev) {
+        setOpenItemId(null);
+      }
+      return newCategory;
+    });
+  };
+
   return (
-    <section id="faq" className="pt-8 lg:pt-10 pb-0 bg-[var(--background)] -mb-8 lg:-mb-28">
-      <div className="container mx-auto px-4 pb-0">
+    <section id="faq" className="pt-8 lg:pt-10 pb-8 lg:pb-0 bg-[var(--background)] -mb-8 lg:-mb-28">
+      <div className="container mx-auto px-4 sm:px-6">
+        {/* Mobile Accordion View */}
+        <div className="lg:hidden space-y-3 pb-4">
+          {CATEGORIES.map((category) => {
+            const categoryItems = FAQ_ITEMS.filter((item) => item.category === category);
+            const isCategoryOpen = openCategoryName === category;
+            
+            return (
+              <div
+                key={category}
+                className="bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 rounded-xl overflow-hidden"
+              >
+                <button
+                  onClick={() => handleMobileCategoryToggle(category)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left"
+                >
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--foreground)]/80">
+                    {category}
+                  </h3>
+                  <ChevronDown
+                    className={cn(
+                      "w-5 h-5 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
+                      isCategoryOpen && "rotate-180"
+                    )}
+                  />
+                </button>
+                <div
+                  className={cn(
+                    "overflow-hidden transition-all duration-300 ease-in-out",
+                    isCategoryOpen ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+                  )}
+                >
+                  <div className="space-y-2 pt-2 pb-2">
+                    {categoryItems.map((item) => {
+                      const isItemOpen = openItemId === item.id;
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-[var(--background)]/50 dark:bg-[var(--background)]/30 rounded-lg overflow-hidden mx-2"
+                        >
+                          <button
+                            onClick={() => handleItemToggle(item.id)}
+                            className="w-full flex items-center justify-between px-4 py-3 text-left"
+                          >
+                            <h4 className="text-sm font-medium leading-snug pr-4">{item.question}</h4>
+                            <ChevronDown
+                              className={cn(
+                                "w-4 h-4 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
+                                isItemOpen && "rotate-180"
+                              )}
+                            />
+                          </button>
+                          <div
+                            className={cn(
+                              "overflow-hidden transition-all duration-300 ease-in-out",
+                              isItemOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                            )}
+                          >
+                            <div className="px-4 pb-3">
+                              <p className="text-sm text-[var(--foreground)]/80 leading-relaxed">
+                                {item.answer}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Sidebar + Content View */}
         <div 
-          className="flex flex-col lg:flex-row gap-8 lg:gap-12 max-w-7xl mx-auto"
+          className="hidden lg:flex flex-row gap-8 lg:gap-12 max-w-7xl mx-auto"
           style={{
             contain: "layout",
           }}
