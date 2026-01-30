@@ -38,13 +38,6 @@ const CONTACT_OPTIONS: ContactOption[] = [
     color: "bg-[#0088cc]",
   },
   {
-    id: "ticket",
-    label: "Создать тикет",
-    icon: <MessageCircle className="w-5 h-5" />,
-    href: "mailto:support@osobytie.com?subject=Создать тикет",
-    color: "bg-[var(--color-golden)]",
-  },
-  {
     id: "email",
     label: "Email",
     icon: <Mail className="w-5 h-5" />,
