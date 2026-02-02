@@ -1,11 +1,15 @@
 "use client";
 
-import { Card } from "@/ui/components/Card";
+import { useState } from "react";
 import { Button } from "@/ui/components/Button";
-import { User, Package, Calendar, LogOut, Mail } from "lucide-react";
+import { User, Package, LogOut, Mail, FileText, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 
 export default function CabinetPage() {
+  const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
+  const [isQuestionnaireCompleted, setIsQuestionnaireCompleted] = useState(false);
+
   const user = {
     name: "Иван Иванов",
     email: "ivan@example.com",
@@ -13,25 +17,23 @@ export default function CabinetPage() {
 
   const subscription = {
     title: "Премиум",
-    price: "4 990 ₽/мес",
-    status: "Активна",
-    nextPayment: "15.03.2025",
-  };
-
-  const upcomingEvent = {
+    duration: "3 месяца",
     deliveryDate: "10.03.2025",
     deliveryTime: "14:00",
-    status: "В пути",
   };
 
   const handleLogout = () => {
     console.log("Logout");
   };
 
+  const handleQuestionnaireComplete = () => {
+    setIsQuestionnaireCompleted(true);
+  };
+
   return (
-    <div className="space-y-8 p-8">
+    <div className="space-y-8 p-8 pt-16">
       <div className="flex flex-col gap-0 max-w-2xl">
-        <Card className="p-6">
+        <div className="p-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
               <div className="w-14 h-14 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
@@ -59,54 +61,76 @@ export default function CabinetPage() {
               Выйти
             </Button>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-8 -mt-6">
+        <div className="p-8 -mt-6">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
               <Package className="h-6 w-6 text-[var(--color-golden)]" />
             </div>
             <div>
-              <h3 className="text-xl font-bold mb-2">Текущая подписка</h3>
-              <p className="text-base text-[var(--foreground)]/70">{subscription.title}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
-            <div>
-              <p className="text-sm text-[var(--foreground)]/60 mb-2">Стоимость</p>
-              <p className="text-lg font-medium text-[var(--color-golden)]">{subscription.price}</p>
-            </div>
-            <div>
-              <p className="text-sm text-[var(--foreground)]/60 mb-2">Следующий платёж</p>
-              <p className="text-lg font-medium">{subscription.nextPayment}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-8 -mt-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-lg bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
-              <Calendar className="h-6 w-6 text-[var(--color-golden)]" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold mb-2">Предстоящее мероприятие</h3>
-              <p className="text-base text-[var(--foreground)]/70">Доставка коробки</p>
+              <h3 className="text-xl font-bold mb-1">{subscription.title}</h3>
+              <p className="text-sm text-[var(--foreground)]/70">{subscription.duration}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
             <div>
               <p className="text-sm text-[var(--foreground)]/60 mb-2">Дата доставки</p>
-              <p className="text-lg font-medium">{upcomingEvent.deliveryDate}</p>
+              <p className="text-lg font-medium">{subscription.deliveryDate}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--foreground)]/60 mb-2">Время доставки</p>
-              <p className="text-lg font-medium">{upcomingEvent.deliveryTime}</p>
+              <p className="text-sm text-[var(--foreground)]/60 mb-2">Примерное время</p>
+              <p className="text-lg font-medium">{subscription.deliveryTime}</p>
             </div>
           </div>
-        </Card>
+        </div>
+
+        <div className="p-8 -mt-6">
+          {isQuestionnaireCompleted ? (
+            <div className="flex items-center gap-4 p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10">
+              <div className="w-12 h-12 bg-[var(--color-golden)]/20 flex items-center justify-center shrink-0">
+                <Check className="h-6 w-6 text-[var(--color-golden)]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold mb-1">Анкетирование пройдено</h3>
+                <p className="text-sm text-[var(--foreground)]/70">
+                  Спасибо! Ваши ответы помогут нам организовать идеальное свидание
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsQuestionnaireOpen(true)}
+                className="uppercase tracking-wider"
+              >
+                Изменить
+              </Button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsQuestionnaireOpen(true)}
+              className="w-full p-6 bg-[var(--color-golden)] hover:opacity-90 transition-opacity text-left"
+            >
+              <div className="flex items-center gap-4">
+                <FileText className="h-6 w-6 text-[var(--background)] shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold mb-1 text-[var(--background)]">Пройти анкетирование</h3>
+                  <p className="text-sm text-[var(--background)]/80">
+                    Помогите нам узнать ваши предпочтения для идеального свидания
+                  </p>
+                </div>
+              </div>
+            </button>
+          )}
+        </div>
       </div>
+
+      <QuestionnaireModal
+        isOpen={isQuestionnaireOpen}
+        onClose={() => setIsQuestionnaireOpen(false)}
+        onComplete={handleQuestionnaireComplete}
+      />
     </div>
   );
 }

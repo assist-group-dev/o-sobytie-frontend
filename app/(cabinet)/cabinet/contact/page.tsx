@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MessageCircle } from "lucide-react";
+import { Mail, MessageCircle, Copy } from "lucide-react";
 import { Button } from "@/ui/components/Button";
-import { Card } from "@/ui/components/Card";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
 
@@ -32,14 +31,9 @@ const CONTACT_OPTIONS = [
     ),
     color: "bg-[#0077FF] hover:bg-[#0077FF]/90",
   },
-  {
-    id: "email",
-    label: "Email",
-    href: "mailto:info@osobytie.com",
-    icon: <Mail className="w-6 h-6" />,
-    color: "bg-[var(--color-golden)] hover:bg-[var(--color-golden)]/90",
-  },
 ];
+
+const EMAIL = "info@osobytie.com";
 
 export default function ContactPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,6 +43,7 @@ export default function ContactPage() {
     contact: "",
     message: "",
   });
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,17 +54,23 @@ export default function ContactPage() {
   };
 
   const handleContactClick = (href: string) => {
-    if (href.startsWith("mailto:")) {
-      window.location.href = href;
-    } else {
-      window.open(href, "_blank", "noopener,noreferrer");
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(EMAIL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy email:", err);
     }
   };
 
   return (
     <div className="space-y-8 p-8">
       <div className="flex flex-col gap-0 max-w-2xl">
-        <Card className="p-8">
+        <div className="p-8">
           <h2 className="text-2xl font-bold mb-6">Способы связи</h2>
           <p className="text-base text-[var(--foreground)]/70 mb-8">
             Свяжитесь с нами через удобный для вас канал
@@ -84,7 +85,7 @@ export default function ContactPage() {
                   handleContactClick(option.href);
                 }}
                 className={cn(
-                  "flex items-center gap-4 px-6 py-4 rounded-lg text-white transition-all duration-200",
+                  "flex items-center gap-4 px-6 py-4 text-white transition-all duration-200",
                   "hover:scale-[1.02] hover:shadow-lg",
                   option.color
                 )}
@@ -93,10 +94,25 @@ export default function ContactPage() {
                 <span className="font-medium text-base">{option.label}</span>
               </a>
             ))}
+            
+            <div className="flex items-center gap-4 px-6 py-4 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10">
+              <Mail className="w-6 h-6 text-[var(--color-golden)] flex-shrink-0" />
+              <span className="font-medium text-base flex-1">{EMAIL}</span>
+              <button
+                onClick={handleCopyEmail}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2",
+                  "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
+                )}
+              >
+                <Copy className="w-4 h-4" />
+                {copied ? "Скопировано" : "Копировать"}
+              </button>
+            </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="p-8 -mt-6">
+        <div className="p-8 -mt-6">
           <p className="text-base text-[var(--foreground)]/70 mb-8">
             Или оставьте заявку, и мы свяжемся с вами в ближайшее время
           </p>
@@ -108,7 +124,7 @@ export default function ContactPage() {
             <MessageCircle className="w-6 h-6 mr-2" />
             Создать заявку
           </Button>
-        </Card>
+        </div>
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="p-6">
@@ -167,7 +183,7 @@ export default function ContactPage() {
                 value={formData.contact}
                 onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
                 className={cn(
-                  "w-full px-4 py-2 rounded-md border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                 )}
@@ -192,7 +208,7 @@ export default function ContactPage() {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 className={cn(
-                  "w-full px-4 py-2 rounded-md border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                 )}
@@ -211,7 +227,7 @@ export default function ContactPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 className={cn(
-                  "w-full px-4 py-2 rounded-md border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]",
                   "resize-none"

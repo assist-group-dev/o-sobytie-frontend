@@ -77,7 +77,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                       key={item.id}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-200",
+                        "flex items-center gap-2 px-3 py-2 text-sm transition-all duration-200",
                         "hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20",
                         "hover:text-[var(--color-golden)]",
                         isActive &&
@@ -105,7 +105,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                     onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Введите код"
                     className={cn(
-                      "flex-1 px-3 py-1.5 text-sm rounded-md border border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20",
+                      "flex-1 px-3 py-1.5 text-sm border border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20",
                       "bg-[var(--background)] text-[var(--foreground)]",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                     )}
@@ -113,7 +113,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   <button
                     type="submit"
                     className={cn(
-                      "px-3 py-1.5 text-sm rounded-md font-medium transition-colors",
+                      "px-3 py-1.5 text-sm font-medium transition-colors",
                       "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
                     )}
                   >

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { Card } from "@/ui/components/Card";
 
 interface FAQItem {
   id: string;
@@ -95,109 +94,96 @@ const CATEGORIES = [
 ];
 
 export default function FAQPage() {
-  const [openCategory, setOpenCategory] = useState<string>(CATEGORIES[0]);
-  const [selectedId, setSelectedId] = useState<string>(FAQ_ITEMS[0].id);
-  const selectedItem = FAQ_ITEMS.find((item) => item.id === selectedId) || FAQ_ITEMS[0];
+  const firstCategory = CATEGORIES[0];
+  const firstItem = FAQ_ITEMS.find((item) => item.category === firstCategory);
+  const [openCategoryName, setOpenCategoryName] = useState<string | null>(firstCategory);
+  const [openItemId, setOpenItemId] = useState<string | null>(firstItem?.id || null);
 
   const handleCategoryToggle = (category: string) => {
-    if (openCategory === category) {
-      return;
-    }
-    setOpenCategory(category);
-    const firstItemInCategory = FAQ_ITEMS.find((item) => item.category === category);
-    if (firstItemInCategory) {
-      setSelectedId(firstItemInCategory.id);
-    }
+    setOpenCategoryName((prev) => {
+      const newCategory = prev === category ? null : category;
+      if (newCategory !== prev) {
+        setOpenItemId(null);
+      }
+      return newCategory;
+    });
+  };
+
+  const handleItemToggle = (itemId: string) => {
+    setOpenItemId((prev) => (prev === itemId ? null : itemId));
   };
 
   return (
-    <div className="space-y-8 p-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <aside className="lg:w-1/3 flex-shrink-0">
-          <Card className="p-6">
-            <div className="space-y-3">
-              {CATEGORIES.map((category) => {
-                const categoryItems = FAQ_ITEMS.filter((item) => item.category === category);
-                const isOpen = openCategory === category;
-                const maxHeight = categoryItems.length * 60 + 20;
-                return (
-                  <div key={category} className="mb-6">
-                    <button
-                      onClick={() => handleCategoryToggle(category)}
-                      className={cn(
-                        "w-full flex items-center justify-between px-5 py-4 rounded-lg transition-all duration-200 group",
-                        "hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20",
-                        isOpen
-                          ? "bg-[var(--color-cream)]/40 dark:bg-[var(--color-cream)]/30"
-                          : "bg-transparent"
-                      )}
-                    >
-                      <h3 className="text-base font-bold uppercase tracking-wider text-[var(--foreground)]/80">
-                        {category}
-                      </h3>
-                      <ChevronRight
-                        className={cn(
-                          "w-4 h-4 flex-shrink-0 transition-transform duration-200",
-                          isOpen ? "rotate-90" : "group-hover:translate-x-1"
-                        )}
-                      />
-                    </button>
+    <div className="space-y-3 p-8 pt-20">
+      {CATEGORIES.map((category) => {
+        const categoryItems = FAQ_ITEMS.filter((item) => item.category === category);
+        const isCategoryOpen = openCategoryName === category;
+        
+        return (
+          <div
+            key={category}
+            className="bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 overflow-hidden"
+          >
+            <button
+              onClick={() => handleCategoryToggle(category)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--foreground)]/80">
+                {category}
+              </h3>
+              <ChevronDown
+                className={cn(
+                  "w-5 h-5 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
+                  isCategoryOpen && "rotate-180"
+                )}
+              />
+            </button>
+            <div
+              className={cn(
+                "overflow-hidden transition-all duration-300 ease-in-out",
+                isCategoryOpen ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+              )}
+            >
+              <div className="space-y-2 pt-2 pb-2">
+                {categoryItems.map((item) => {
+                  const isItemOpen = openItemId === item.id;
+                  return (
                     <div
-                      className={cn(
-                        "overflow-hidden transition-all duration-300 ease-in-out",
-                        isOpen ? "opacity-100" : "opacity-0"
-                      )}
-                      style={{
-                        maxHeight: isOpen ? `${maxHeight}px` : "0px",
-                      }}
+                      key={item.id}
+                      className="bg-[var(--background)]/50 dark:bg-[var(--background)]/30 overflow-hidden mx-2"
                     >
-                      <div className="pt-3 space-y-2">
-                        {categoryItems.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => setSelectedId(item.id)}
-                            className={cn(
-                              "w-full text-left px-5 py-4 rounded-lg transition-all duration-200",
-                              "hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20",
-                              selectedId === item.id
-                                ? "bg-[var(--color-cream)]/40 dark:bg-[var(--color-cream)]/30 text-[var(--color-golden)] font-medium"
-                                : "text-[var(--foreground)]/70 hover:text-[var(--foreground)]"
-                            )}
-                          >
-                            <span className="text-base leading-snug">{item.question}</span>
-                          </button>
-                        ))}
+                      <button
+                        onClick={() => handleItemToggle(item.id)}
+                        className="w-full flex items-center justify-between px-4 py-3 text-left"
+                      >
+                        <h4 className="text-sm font-medium leading-snug pr-4">{item.question}</h4>
+                        <ChevronDown
+                          className={cn(
+                            "w-4 h-4 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
+                            isItemOpen && "rotate-180"
+                          )}
+                        />
+                      </button>
+                      <div
+                        className={cn(
+                          "overflow-hidden transition-all duration-300 ease-in-out",
+                          isItemOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                        )}
+                      >
+                        <div className="px-4 pb-3">
+                          <p className="text-sm text-[var(--foreground)]/80 leading-relaxed">
+                            {item.answer}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </Card>
-        </aside>
-
-        <main className="lg:w-2/3 flex-1">
-          <Card className="p-8">
-            <div className="mb-6">
-              <span className="inline-block px-4 py-2 text-sm font-bold uppercase tracking-wider bg-[var(--color-golden)]/20 text-[var(--color-golden)] rounded-full">
-                {selectedItem.category}
-              </span>
-            </div>
-            <h3 className="text-3xl font-bold mb-8 leading-tight">
-              {selectedItem.question}
-            </h3>
-            <div className="prose prose-lg max-w-none">
-              <p
-                key={selectedId}
-                className="text-[var(--foreground)]/80 leading-relaxed text-lg animate-in fade-in duration-300"
-              >
-                {selectedItem.answer}
-              </p>
-            </div>
-          </Card>
-        </main>
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
-
