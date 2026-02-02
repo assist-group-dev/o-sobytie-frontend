@@ -4,7 +4,19 @@ import { useState } from "react";
 import Image from "next/image";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { ArrowRight, Gift } from "lucide-react";
+import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
+import { cn } from "@/utils/cn";
+import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+
+const maskEmail = (email: string): string => {
+  const [localPart, domain] = email.split("@");
+  if (localPart.length <= 2) {
+    return `${localPart[0]}***@${domain}`;
+  }
+  const visibleStart = localPart.slice(0, 2);
+  const visibleEnd = localPart.slice(-1);
+  return `${visibleStart}***${visibleEnd}@${domain}`;
+};
 
 interface Tariff {
   id: string;
@@ -76,7 +88,56 @@ const TARIFFS: Tariff[] = [
 ];
 
 export function SubscriptionCards() {
+  const { userData } = useCabinetStore();
   const [selectedTariff, setSelectedTariff] = useState<Tariff | null>(null);
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
+  const [giftTariff, setGiftTariff] = useState<Tariff | null>(null);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const userEmail = (userData?.email as string) || "ivan@example.com";
+  const maskedEmail = maskEmail(userEmail);
+
+  const generatePromoCode = () => {
+    return `GIFT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+  };
+
+  const handleBuyAsGift = () => {
+    if (selectedTariff) {
+      const code = generatePromoCode();
+      setPromoCode(code);
+      setGiftTariff(selectedTariff);
+      setIsGiftModalOpen(true);
+      setSelectedTariff(null);
+    }
+  };
+
+  const handleCopyCode = async () => {
+    if (promoCode) {
+      try {
+        await navigator.clipboard.writeText(promoCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("Failed to copy code:", err);
+      }
+    }
+  };
+
+  const handleDownloadTxt = () => {
+    if (promoCode && giftTariff) {
+      const content = `Промокод для подписки "${giftTariff.title}"\n\nПромокод: ${promoCode}\n\nСпасибо за покупку!`;
+      const blob = new Blob([content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `promo-code-${promoCode}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -199,12 +260,95 @@ export function SubscriptionCards() {
                 <Button
                   variant="outline"
                   size="lg"
+                  onClick={handleBuyAsGift}
                   className="w-full uppercase tracking-widest text-sm sm:text-base group/btn transition-all duration-300 hover:scale-[1.02] hover:border-[var(--color-golden)] hover:text-[var(--color-golden)] flex items-center justify-center gap-2"
                 >
                   <Gift className="w-4 h-4 sm:w-5 sm:h-5" />
                   Купить в подарок
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={isGiftModalOpen}
+        onClose={() => {
+          setIsGiftModalOpen(false);
+          setPromoCode(null);
+          setGiftTariff(null);
+        }}
+        className="p-0 max-w-2xl w-full mx-2 sm:mx-4"
+      >
+        {promoCode && giftTariff && (
+          <div className="p-6 sm:p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase mb-2">Промокод создан</h2>
+              <p className="text-base text-[var(--foreground)]/70">
+                Ваш промокод для подписки "{giftTariff.title}"
+              </p>
+            </div>
+
+            <div className="mb-6 p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 border-2 border-[var(--color-golden)]">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-sm text-[var(--foreground)]/60 mb-2">Промокод</p>
+                  <p className="text-2xl font-bold font-mono tracking-wider">{promoCode}</p>
+                </div>
+                <button
+                  onClick={handleCopyCode}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 shrink-0",
+                    "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
+                  )}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Скопировано
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Копировать
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-6 p-4 bg-[var(--color-cream)]/10 dark:bg-[var(--color-cream)]/5 flex items-start gap-3">
+              <Mail className="w-5 h-5 text-[var(--color-golden)] shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-[var(--foreground)]/70 mb-1">
+                  Промокод отправлен на вашу электронную почту
+                </p>
+                <p className="text-sm font-medium text-[var(--foreground)]">{maskedEmail}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleDownloadTxt}
+                className="flex-1 uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Скачать TXT
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => {
+                  setIsGiftModalOpen(false);
+                  setPromoCode(null);
+                  setGiftTariff(null);
+                }}
+                className="flex-1 uppercase tracking-wider"
+              >
+                Закрыть
+              </Button>
             </div>
           </div>
         )}
