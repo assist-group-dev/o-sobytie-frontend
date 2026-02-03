@@ -83,13 +83,13 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 pt-48 pb-6">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-48 pb-4 sm:pb-6">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
           <aside
             className={cn(
               "w-full lg:w-80 shrink-0 rounded-xl shadow-lg border border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 bg-[var(--background)]/95 backdrop-blur-sm overflow-hidden flex flex-col",
-              "lg:sticky lg:top-80",
-              "max-lg:fixed max-lg:top-16 max-lg:left-4 max-lg:right-4 max-lg:z-40",
+              "lg:sticky lg:top-24",
+              "max-lg:fixed max-lg:top-16 max-lg:inset-x-4 max-lg:w-[calc(100%-2rem)] max-lg:z-40",
               "max-lg:transition-all max-lg:duration-300 max-lg:ease-in-out",
               !isMobileMenuOpen && "max-lg:translate-y-[-100%] max-lg:opacity-0 max-lg:pointer-events-none",
               isMobileMenuOpen && "max-lg:translate-y-0 max-lg:opacity-100 max-lg:pointer-events-auto"

@@ -143,7 +143,7 @@ export function SubscriptionCards() {
   };
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {TARIFFS.map((tariff) => (
           <div
             key={tariff.id}
@@ -173,12 +173,12 @@ export function SubscriptionCards() {
               )}
             </div>
             
-            <div className="space-y-3">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xl font-bold uppercase">{tariff.title}</h3>
-                <div className="text-right">
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex justify-between items-start gap-2">
+                <h3 className="text-lg sm:text-xl font-bold uppercase">{tariff.title}</h3>
+                <div className="text-right shrink-0">
                   {tariff.originalPrice ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
                       <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
                       <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
                     </div>
@@ -188,20 +188,20 @@ export function SubscriptionCards() {
                 </div>
               </div>
               
-              <p className="text-sm text-[var(--foreground)]/60 line-clamp-2">
+              <p className="text-xs sm:text-sm text-[var(--foreground)]/60 line-clamp-2">
                 {tariff.description}
               </p>
               
               <div className="pt-2">
                 <Button
                   variant="text"
-                  className="group/btn p-0 flex items-center gap-2 text-sm uppercase font-bold tracking-wider hover:text-[var(--color-golden)]"
+                  className="group/btn p-0 flex items-center gap-2 text-xs sm:text-sm uppercase font-bold tracking-wider hover:text-[var(--color-golden)]"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedTariff(tariff);
                   }}
                 >
-                  Подробнее <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                  Подробнее <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
               </div>
             </div>
@@ -290,35 +290,35 @@ export function SubscriptionCards() {
         className="p-0 max-w-2xl w-full mx-2 sm:mx-4"
       >
         {promoCode && giftTariff && (
-          <div className="p-6 sm:p-8">
-            <div className="mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold uppercase mb-2">Промокод создан</h2>
-              <p className="text-base text-[var(--foreground)]/70">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold uppercase mb-2">Промокод создан</h2>
+              <p className="text-sm sm:text-base text-[var(--foreground)]/70">
                 Ваш промокод для подписки "{giftTariff.title}"
               </p>
             </div>
 
-            <div className="mb-6 p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 border-2 border-[var(--color-golden)]">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-sm text-[var(--foreground)]/60 mb-2">Промокод</p>
-                  <p className="text-2xl font-bold font-mono tracking-wider">{promoCode}</p>
+            <div className="mb-4 sm:mb-6 p-4 sm:p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 border-2 border-[var(--color-golden)]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">Промокод</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold font-mono tracking-wider break-all sm:break-normal">{promoCode}</p>
                 </div>
                 <button
                   onClick={handleCopyCode}
                   className={cn(
-                    "px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2 shrink-0",
+                    "px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto",
                     "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
                   )}
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Скопировано
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Копировать
                     </>
                   )}
@@ -326,24 +326,24 @@ export function SubscriptionCards() {
               </div>
             </div>
 
-            <div className="mb-6 p-4 bg-[var(--color-cream)]/10 dark:bg-[var(--color-cream)]/5 flex items-start gap-3">
-              <Mail className="w-5 h-5 text-[var(--color-golden)] shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm text-[var(--foreground)]/70 mb-1">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-[var(--color-cream)]/10 dark:bg-[var(--color-cream)]/5 flex items-start gap-2 sm:gap-3">
+              <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-golden)] shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mb-1">
                   Промокод отправлен на вашу электронную почту
                 </p>
-                <p className="text-sm font-medium text-[var(--foreground)]">{maskedEmail}</p>
+                <p className="text-xs sm:text-sm font-medium text-[var(--foreground)] break-all sm:break-normal">{maskedEmail}</p>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
               <Button
                 variant="outline"
                 size="lg"
                 onClick={handleDownloadTxt}
                 className="flex-1 uppercase tracking-wider flex items-center justify-center gap-2"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Скачать TXT
               </Button>
               <Button

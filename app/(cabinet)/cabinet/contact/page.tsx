@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, MessageCircle, Copy } from "lucide-react";
+import { Mail, MessageCircle, Copy, Check } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
@@ -68,14 +68,14 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-0 max-w-2xl">
-        <div className="p-8">
-          <h2 className="text-2xl font-bold mb-6">Способы связи</h2>
-          <p className="text-base text-[var(--foreground)]/70 mb-8">
+        <div className="p-4 sm:p-8">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Способы связи</h2>
+          <p className="text-sm sm:text-base text-[var(--foreground)]/70 mb-6 sm:mb-8">
             Свяжитесь с нами через удобный для вас канал
           </p>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {CONTACT_OPTIONS.map((option) => (
               <a
                 key={option.id}
@@ -85,35 +85,40 @@ export default function ContactPage() {
                   handleContactClick(option.href);
                 }}
                 className={cn(
-                  "flex items-center gap-4 px-6 py-4 text-white transition-all duration-200",
+                  "flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 text-white transition-all duration-200",
                   "hover:scale-[1.02] hover:shadow-lg",
                   option.color
                 )}
               >
                 <div className="flex-shrink-0">{option.icon}</div>
-                <span className="font-medium text-base">{option.label}</span>
+                <span className="font-medium text-sm sm:text-base">{option.label}</span>
               </a>
             ))}
             
-            <div className="flex items-center gap-4 px-6 py-4 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10">
-              <Mail className="w-6 h-6 text-[var(--color-golden)] flex-shrink-0" />
-              <span className="font-medium text-base flex-1">{EMAIL}</span>
+            <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10">
+              <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-golden)] flex-shrink-0" />
+              <span className="font-medium text-sm sm:text-base flex-1 min-w-0 truncate">{EMAIL}</span>
               <button
                 onClick={handleCopyEmail}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium transition-colors flex items-center gap-2",
-                  "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
+                  "p-2 transition-colors flex items-center justify-center shrink-0",
+                  "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90",
+                  copied && "bg-green-600 dark:bg-green-700"
                 )}
+                aria-label={copied ? "Скопировано" : "Копировать"}
               >
-                <Copy className="w-4 h-4" />
-                {copied ? "Скопировано" : "Копировать"}
+                {copied ? (
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                ) : (
+                  <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
+                )}
               </button>
             </div>
           </div>
         </div>
 
-        <div className="p-8 -mt-6">
-          <p className="text-base text-[var(--foreground)]/70 mb-8">
+        <div className="p-4 sm:p-8 -mt-4 sm:-mt-6">
+          <p className="text-sm sm:text-base text-[var(--foreground)]/70 mb-6 sm:mb-8">
             Или оставьте заявку, и мы свяжемся с вами в ближайшее время
           </p>
           <Button
@@ -121,17 +126,17 @@ export default function ContactPage() {
             className="w-full uppercase tracking-wider flex items-center justify-center"
             onClick={() => setIsModalOpen(true)}
           >
-            <MessageCircle className="w-6 h-6 mr-2" />
+            <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
             Создать заявку
           </Button>
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="p-6">
-        <div className="space-y-6">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="p-4 sm:p-6">
+        <div className="space-y-4 sm:space-y-6">
           <div>
-            <h2 className="text-2xl font-bold mb-2">Создать заявку</h2>
-            <p className="text-sm text-[var(--foreground)]/70">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Создать заявку</h2>
+            <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
               Заполните форму, и мы свяжемся с вами в ближайшее время
             </p>
           </div>

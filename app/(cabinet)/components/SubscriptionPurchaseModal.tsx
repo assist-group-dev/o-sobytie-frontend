@@ -305,13 +305,13 @@ export function SubscriptionPurchaseModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4">
-      <div className="p-6 sm:p-8">
-        <div className="mb-6">
-          <div className="mb-4">
-            <h2 className="text-2xl sm:text-3xl font-bold uppercase mb-1">
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-4 sm:mb-6">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold uppercase mb-1">
               Оформление подписки
             </h2>
-            <p className="text-sm text-[var(--foreground)]/70">
+            <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
               <span className="whitespace-nowrap">{tariff.title}</span> • {tariff.price}
             </p>
           </div>
@@ -323,33 +323,33 @@ export function SubscriptionPurchaseModal({
               />
             </div>
           </div>
-          <p className="text-sm text-[var(--foreground)]/70">
+          <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
             Шаг {currentStep + 1} из {steps.length}
           </p>
         </div>
 
-        <div className="mb-6">
-          <h3 className="text-xl font-bold mb-2">{steps[currentStep].title}</h3>
-          <p className="text-sm text-[var(--foreground)]/70 mb-6">
+        <div className="mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-xl font-bold mb-2">{steps[currentStep].title}</h3>
+          <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mb-4 sm:mb-6">
             {steps[currentStep].description}
           </p>
 
           {currentStep === 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {PREMIUM_LEVELS.map((level) => (
                 <button
                   key={level.id}
                   onClick={() => setFormData({ ...formData, premiumLevel: level.id })}
                   className={cn(
-                    "p-6 text-left border-2 transition-all duration-200",
+                    "p-4 sm:p-6 text-left border-2 transition-all duration-200",
                     "hover:border-[var(--color-golden)] hover:bg-[var(--color-cream)]/10",
                     formData.premiumLevel === level.id
                       ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
                       : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50"
                   )}
                 >
-                  <h4 className="text-lg font-bold mb-2">{level.name}</h4>
-                  <p className="text-sm text-[var(--foreground)]/70">{level.description}</p>
+                  <h4 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">{level.name}</h4>
+                  <p className="text-xs sm:text-sm text-[var(--foreground)]/70">{level.description}</p>
                 </button>
               ))}
             </div>
@@ -358,7 +358,7 @@ export function SubscriptionPurchaseModal({
           {currentStep === 1 && (
             <div className="space-y-4">
               <div>
-                <label htmlFor="city" className="block text-sm font-medium mb-2">
+                <label htmlFor="city" className="block text-xs sm:text-sm font-medium mb-2">
                   Город
                 </label>
                 <input
@@ -370,7 +370,7 @@ export function SubscriptionPurchaseModal({
                   onBlur={() => setFocusedField(null)}
                   placeholder={focusedField === "city" ? "" : "Москва"}
                   className={cn(
-                    "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                    "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                     "bg-[var(--background)] text-[var(--foreground)]",
                     "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                   )}
@@ -378,7 +378,7 @@ export function SubscriptionPurchaseModal({
                 />
               </div>
               <div>
-                <label htmlFor="street" className="block text-sm font-medium mb-2">
+                <label htmlFor="street" className="block text-xs sm:text-sm font-medium mb-2">
                   Улица
                 </label>
                 <input
@@ -390,16 +390,16 @@ export function SubscriptionPurchaseModal({
                   onBlur={() => setFocusedField(null)}
                   placeholder={focusedField === "street" ? "" : "Ленина"}
                   className={cn(
-                    "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                    "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                     "bg-[var(--background)] text-[var(--foreground)]",
                     "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                   )}
                   required
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="house" className="block text-sm font-medium mb-2">
+                  <label htmlFor="house" className="block text-xs sm:text-sm font-medium mb-2">
                     Дом
                   </label>
                   <input
@@ -411,7 +411,7 @@ export function SubscriptionPurchaseModal({
                     onBlur={() => setFocusedField(null)}
                     placeholder={focusedField === "house" ? "" : "10"}
                     className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                      "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                       "bg-[var(--background)] text-[var(--foreground)]",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                     )}
@@ -419,7 +419,7 @@ export function SubscriptionPurchaseModal({
                   />
                 </div>
                 <div>
-                  <label htmlFor="apartment" className="block text-sm font-medium mb-2">
+                  <label htmlFor="apartment" className="block text-xs sm:text-sm font-medium mb-2">
                     Квартира
                   </label>
                   <input
@@ -431,7 +431,7 @@ export function SubscriptionPurchaseModal({
                     onBlur={() => setFocusedField(null)}
                     placeholder={focusedField === "apartment" ? "" : "25"}
                     className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                      "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                       "bg-[var(--background)] text-[var(--foreground)]",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                     )}
@@ -443,6 +443,9 @@ export function SubscriptionPurchaseModal({
 
           {currentStep === 2 && (
             <div>
+              <label htmlFor="phone" className="block text-xs sm:text-sm font-medium mb-2">
+                Телефон
+              </label>
               <input
                 id="phone"
                 type="tel"
@@ -450,7 +453,7 @@ export function SubscriptionPurchaseModal({
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+7 (999) 123-45-67"
                 className={cn(
-                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                 )}
@@ -460,12 +463,12 @@ export function SubscriptionPurchaseModal({
           )}
 
           {currentStep === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div className="relative">
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs sm:text-sm font-medium mb-2">
                   Точная дата доставки
                 </label>
-                <div className="relative w-fit max-w-xs">
+                <div className="relative w-full sm:w-fit sm:max-w-xs">
                   <input
                     type="text"
                     value={
@@ -518,7 +521,7 @@ export function SubscriptionPurchaseModal({
                     }}
                     placeholder="ДД.ММ.ГГГГ"
                     className={cn(
-                      "w-full px-4 py-2 pr-10 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                      "w-full px-3 sm:px-4 py-2 pr-8 sm:pr-10 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                       "bg-[var(--background)] text-[var(--foreground)]",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                     )}
@@ -527,9 +530,9 @@ export function SubscriptionPurchaseModal({
                   <button
                     type="button"
                     onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
+                    className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
                   >
-                    <Calendar className="w-4 h-4" />
+                    <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 </div>
                 {isCalendarOpen && (
@@ -538,17 +541,17 @@ export function SubscriptionPurchaseModal({
                       className="fixed inset-0 z-10"
                       onClick={() => setIsCalendarOpen(false)}
                     />
-                    <div className="absolute top-full left-0 mt-2 z-20 w-72 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 bg-[var(--background)] shadow-lg">
-                      <div className="p-3">
-                        <div className="flex items-center justify-between mb-3">
+                    <div className="absolute top-full left-0 mt-2 z-20 w-full sm:w-72 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 bg-[var(--background)] shadow-lg">
+                      <div className="p-2 sm:p-3">
+                        <div className="flex items-center justify-between mb-2 sm:mb-3">
                           <button
                             type="button"
                             onClick={handlePrevMonth}
                             className="p-1 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
                           >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
-                          <h4 className="text-sm font-bold">
+                          <h4 className="text-xs sm:text-sm font-bold">
                             {monthNames[calendarMonth]} {calendarYear}
                           </h4>
                           <button
@@ -556,7 +559,7 @@ export function SubscriptionPurchaseModal({
                             onClick={handleNextMonth}
                             className="p-1 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
                           >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
                         </div>
                         <div className="grid grid-cols-7 gap-0.5 mb-1">
@@ -578,23 +581,23 @@ export function SubscriptionPurchaseModal({
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-3">
+                <label className="block text-xs sm:text-sm font-medium mb-2 sm:mb-3">
                   Примерное время доставки
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   {DELIVERY_TIME_SLOTS.map((slot) => (
                     <button
                       key={slot.id}
                       type="button"
                       onClick={() => setFormData({ ...formData, deliveryTime: slot.value })}
                       className={cn(
-                        "px-4 py-3 border-2 transition-all duration-200 text-left",
+                        "px-3 sm:px-4 py-2.5 sm:py-3 border-2 transition-all duration-200 text-left",
                         formData.deliveryTime === slot.value
                           ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
                           : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
                       )}
                     >
-                      <span className="text-sm font-medium">{slot.label}</span>
+                      <span className="text-xs sm:text-sm font-medium">{slot.label}</span>
                     </button>
                   ))}
                 </div>
@@ -603,24 +606,24 @@ export function SubscriptionPurchaseModal({
           )}
         </div>
 
-        <div className="flex gap-3 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
           {currentStep > 0 && (
             <Button
               variant="outline"
               size="lg"
               onClick={handlePrev}
-              className="uppercase tracking-wider"
+              className="uppercase tracking-wider w-full sm:w-auto order-2 sm:order-1"
             >
               Назад
             </Button>
           )}
-          <div className="flex-1" />
+          <div className="flex-1 hidden sm:block" />
           {isLastStep ? (
             <Button
               size="lg"
               onClick={handleSubmit}
               disabled={!isStepValid()}
-              className="uppercase tracking-wider"
+              className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
               Оформить подписку
             </Button>
@@ -629,10 +632,10 @@ export function SubscriptionPurchaseModal({
               size="lg"
               onClick={handleNext}
               disabled={!isStepValid()}
-              className="uppercase tracking-wider flex items-center gap-2"
+              className="uppercase tracking-wider flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-2"
             >
               Далее
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           )}
         </div>

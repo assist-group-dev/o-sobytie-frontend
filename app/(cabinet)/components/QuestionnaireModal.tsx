@@ -183,10 +183,10 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4">
-      <div className="p-6 sm:p-8">
-        <div className="mb-6">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold">{currentStepData.title}</h2>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="mb-4 sm:mb-6">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">{currentStepData.title}</h2>
           </div>
           <div className="mb-2">
             <div className="h-2 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 overflow-hidden">
@@ -196,16 +196,16 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
               />
             </div>
           </div>
-          <p className="text-sm text-[var(--foreground)]/70">
+          <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
             Шаг {currentStep + 1} из {steps.length}
           </p>
         </div>
 
-        <div className="mb-6">
-          <div className="space-y-6">
+        <div className="mb-4 sm:mb-6">
+          <div className="space-y-4 sm:space-y-6">
             {currentStepData.fields.map((field) => (
               <div key={field.key}>
-                <label className="block text-sm font-medium mb-3">
+                <label className="block text-xs sm:text-sm font-medium mb-2 sm:mb-3">
                   {field.label}
                 </label>
                 {field.type === "textarea" && (
@@ -215,7 +215,7 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
                     placeholder={field.placeholder}
                     rows={4}
                     className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                      "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                       "bg-[var(--background)] text-[var(--foreground)]",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]",
                       "resize-none"
@@ -227,7 +227,7 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
                     {field.options?.map((option) => (
                       <label
                         key={option}
-                        className="flex items-center gap-3 cursor-pointer p-3 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
+                        className="flex items-center gap-2 sm:gap-3 cursor-pointer p-2.5 sm:p-3 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
                       >
                         <input
                           type="radio"
@@ -235,9 +235,9 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
                           value={option}
                           checked={(formData[field.key as keyof typeof formData] as string) === option}
                           onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                          className="w-4 h-4 text-[var(--color-golden)] focus:ring-[var(--color-golden)]"
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[var(--color-golden)] focus:ring-[var(--color-golden)]"
                         />
-                        <span>{option}</span>
+                        <span className="text-xs sm:text-sm">{option}</span>
                       </label>
                     ))}
                   </div>
@@ -252,15 +252,15 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
                           type="button"
                           onClick={() => handleMultiSelect(field.key, option)}
                           className={cn(
-                            "w-full text-left px-4 py-3 border-2 transition-all duration-200",
+                            "w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 border-2 transition-all duration-200",
                             selected
                               ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
                               : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
                           )}
                         >
                           <div className="flex items-center justify-between">
-                            <span>{option}</span>
-                            {selected && <Check className="w-5 h-5 text-[var(--color-golden)]" />}
+                            <span className="text-xs sm:text-sm">{option}</span>
+                            {selected && <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-golden)]" />}
                           </div>
                         </button>
                       );
@@ -272,23 +272,23 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
           </div>
         </div>
 
-        <div className="flex gap-3 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
           {currentStep > 0 && (
             <Button
               variant="outline"
               size="lg"
               onClick={handlePrev}
-              className="uppercase tracking-wider"
+              className="uppercase tracking-wider w-full sm:w-auto order-2 sm:order-1"
             >
               Назад
             </Button>
           )}
-          <div className="flex-1" />
+          <div className="flex-1 hidden sm:block" />
           {isLastStep ? (
             <Button
               size="lg"
               onClick={handleSubmit}
-              className="uppercase tracking-wider"
+              className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
               Завершить анкетирование
             </Button>
@@ -296,7 +296,7 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
             <Button
               size="lg"
               onClick={handleNext}
-              className="uppercase tracking-wider"
+              className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
               Далее
             </Button>

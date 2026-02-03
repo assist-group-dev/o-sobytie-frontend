@@ -114,7 +114,7 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {CATEGORIES.map((category) => {
         const categoryItems = FAQ_ITEMS.filter((item) => item.category === category);
         const isCategoryOpen = openCategoryName === category;
@@ -126,14 +126,14 @@ export default function FAQPage() {
           >
             <button
               onClick={() => handleCategoryToggle(category)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left"
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 text-left"
             >
-              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--foreground)]/80">
+              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[var(--foreground)]/80 pr-2">
                 {category}
               </h3>
               <ChevronDown
                 className={cn(
-                  "w-5 h-5 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
+                  "w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
                   isCategoryOpen && "rotate-180"
                 )}
               />
@@ -150,16 +150,16 @@ export default function FAQPage() {
                   return (
                     <div
                       key={item.id}
-                      className="bg-[var(--background)]/50 dark:bg-[var(--background)]/30 overflow-hidden mx-2"
+                      className="bg-[var(--background)]/50 dark:bg-[var(--background)]/30 overflow-hidden mx-1.5 sm:mx-2"
                     >
                       <button
                         onClick={() => handleItemToggle(item.id)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left"
+                        className="w-full flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 text-left"
                       >
-                        <h4 className="text-sm font-medium leading-snug pr-4">{item.question}</h4>
+                        <h4 className="text-xs sm:text-sm font-medium leading-snug pr-2 sm:pr-4">{item.question}</h4>
                         <ChevronDown
                           className={cn(
-                            "w-4 h-4 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
+                            "w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 text-[var(--color-golden)] transition-transform duration-200",
                             isItemOpen && "rotate-180"
                           )}
                         />
@@ -170,8 +170,8 @@ export default function FAQPage() {
                           isItemOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
                         )}
                       >
-                        <div className="px-4 pb-3">
-                          <p className="text-sm text-[var(--foreground)]/80 leading-relaxed">
+                        <div className="px-3 sm:px-4 pb-2.5 sm:pb-3">
+                          <p className="text-xs sm:text-sm text-[var(--foreground)]/80 leading-relaxed">
                             {item.answer}
                           </p>
                         </div>
