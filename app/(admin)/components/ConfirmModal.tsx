@@ -33,7 +33,15 @@ export function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-md w-full mx-2 sm:mx-4">
       <div className="p-6">
         <h2 className="text-2xl font-bold uppercase mb-4">{title}</h2>
-        <p className="text-[var(--foreground)]/70 mb-6">{message}</p>
+        <p className="text-[var(--foreground)]/70 mb-6 break-words">
+          {message.split(/"([^"]+)"/).map((part, index) => 
+            index % 2 === 1 ? (
+              <span key={index} className="whitespace-nowrap">{`"${part}"`}</span>
+            ) : (
+              <span key={index}>{part}</span>
+            )
+          )}
+        </p>
 
         <div className="flex gap-3">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
