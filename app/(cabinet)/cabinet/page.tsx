@@ -30,15 +30,15 @@ export default function CabinetPage() {
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-0 max-w-2xl">
         <div className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
-                <User className="h-6 w-6 sm:h-7 sm:w-7 text-[var(--color-golden)]" />
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[var(--color-golden)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold mb-1 truncate">{user.name}</h2>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-[var(--foreground)]/70">
-                  <Mail className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <h2 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">{user.name}</h2>
+                <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-[var(--foreground)]/70">
+                  <Mail className="h-3 w-3 shrink-0" />
                   <span className="truncate">{user.email}</span>
                 </div>
               </div>
@@ -48,13 +48,14 @@ export default function CabinetPage() {
               size="sm"
               onClick={handleLogout}
               className={cn(
-                "uppercase tracking-wider flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto",
+                "uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 shrink-0",
                 "border-[var(--color-golden)] text-[var(--color-golden)]",
-                "hover:bg-[var(--color-golden)] hover:text-[var(--background)]"
+                "hover:bg-[var(--color-golden)] hover:text-[var(--background)]",
+                "px-2 sm:px-3 py-1.5 text-xs sm:text-sm"
               )}
             >
-              <LogOut className="w-4 h-4" />
-              <span className="sm:inline">Выйти</span>
+              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Выйти</span>
             </Button>
           </div>
         </div>
