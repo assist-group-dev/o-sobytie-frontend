@@ -190,35 +190,32 @@ export default function ClientsPage() {
       key: "subscriptionActive",
       label: "Подписка",
       sortable: true,
-      render: (item: Client) => (
-        <span
-          className={cn(
-            "px-2 py-1 text-xs rounded",
-            item.subscriptionActive
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
-          )}
-        >
-          {item.subscriptionActive ? "Активна" : "Нет"}
-        </span>
-      ),
-    },
-    {
-      key: "banned",
-      label: "Статус",
-      sortable: true,
-      render: (item: Client) => (
-        <span
-          className={cn(
-            "px-2 py-1 text-xs rounded",
-            item.banned
-              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
-              : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-          )}
-        >
-          {item.banned ? "Забанен" : "Активен"}
-        </span>
-      ),
+      render: (item: Client) => {
+        if (item.banned) {
+          return (
+            <span
+              className={cn(
+                "px-2 py-1 text-xs rounded",
+                "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+              )}
+            >
+              Забанен
+            </span>
+          );
+        }
+        return (
+          <span
+            className={cn(
+              "px-2 py-1 text-xs rounded",
+              item.subscriptionActive
+                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+            )}
+          >
+            {item.subscriptionActive ? "Активна" : "Нет"}
+          </span>
+        );
+      },
     },
     {
       key: "actions",
