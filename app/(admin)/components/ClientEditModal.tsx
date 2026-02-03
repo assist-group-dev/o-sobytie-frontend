@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/ui/components/Modal";
 import { Button } from "@/ui/components/Button";
-import { Check } from "lucide-react";
+import { Check, Ban } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 interface QuestionnaireData {
@@ -40,6 +40,7 @@ interface Client {
   eventDate: string;
   questionnaireCompleted: boolean;
   subscriptionActive: boolean;
+  banned?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionData;
 }
@@ -49,6 +50,8 @@ interface ClientEditModalProps {
   onClose: () => void;
   client: Client | null;
   onSave: (data: Partial<Client>) => void;
+  onBan?: () => void;
+  onDelete?: () => void;
 }
 
 const dietaryOptions = ["Вегетарианство", "Веганство", "Халяль", "Кошер", "Без глютена", "Без лактозы"];
@@ -71,7 +74,7 @@ const deliveryTimeSlots = [
   { value: "18:00-21:00", label: "18:00 - 21:00" },
 ];
 
-export function ClientEditModal({ isOpen, onClose, client, onSave }: ClientEditModalProps) {
+export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete }: ClientEditModalProps) {
   const [activeTab, setActiveTab] = useState<"main" | "questionnaire" | "subscription">("main");
   const [formData, setFormData] = useState<Partial<Client>>({
     name: "",
@@ -815,6 +818,40 @@ export function ClientEditModal({ isOpen, onClose, client, onSave }: ClientEditM
           )}
 
           <div className="flex gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            {onDelete && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (onDelete) {
+                    onDelete();
+                  }
+                }}
+                className="flex-1 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                Удалить
+              </Button>
+            )}
+            {onBan && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (onBan) {
+                    onBan();
+                  }
+                }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2",
+                  client?.banned
+                    ? "border-green-500 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    : "border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                )}
+              >
+                <Ban className="h-4 w-4" />
+                {client?.banned ? "Разбанить" : "Забанить"}
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Отмена
             </Button>

@@ -7,6 +7,7 @@ import { Users, Building2, Calendar, Tag, MessageSquare, Ticket, Settings, Chevr
 import { cn } from "@/utils/cn";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
+import { ToastContainer } from "@/app/(admin)/components/ToastContainer";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ interface AdminLayoutProps {
 
 const navigation = [
   { id: "clients", label: "Клиенты", href: "/admin/clients", icon: Users, enabled: true },
-  { id: "counterparties", label: "Контрагенты", href: "/admin/counterparties", icon: Building2, enabled: false },
+  { id: "counterparties", label: "Контрагенты", href: "/admin/counterparties", icon: Building2, enabled: true },
   { id: "schedule", label: "Расписание", href: "/admin/schedule", icon: Calendar, enabled: false },
   { id: "tariffs", label: "Тарифы", href: "/admin/tariffs", icon: Tag, enabled: false },
   { id: "requests", label: "Обращения", href: "/admin/requests", icon: MessageSquare, enabled: false },
@@ -52,6 +53,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-[var(--color-peach)]/10">
       <LoadingOverlay isLoading={isLoading} />
+      <ToastContainer />
       
       <aside
         className={cn(

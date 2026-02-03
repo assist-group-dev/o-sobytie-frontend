@@ -8,6 +8,8 @@ import { Table } from "@/app/(admin)/components/Table";
 import { Pagination } from "@/app/(admin)/components/Pagination";
 import { ClientDetailModal } from "@/app/(admin)/components/ClientDetailModal";
 import { ClientEditModal } from "@/app/(admin)/components/ClientEditModal";
+import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
+import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
 import clientsData from "@/app/(admin)/data/clients.json";
@@ -46,24 +48,32 @@ interface Client {
   eventDate: string;
   questionnaireCompleted: boolean;
   subscriptionActive: boolean;
+  banned?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionData;
 }
 
-const mockClients: Client[] = clientsData as Client[];
+const mockClients: Client[] = (clientsData as Client[]).map((client) => ({
+  ...client,
+  banned: client.banned ?? false,
+}));
 
 export default function ClientsPage() {
+  const addToast = useToastStore((state) => state.addToast);
+  const [clients, setClients] = useState<Client[]>(mockClients);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isBanConfirmOpen, setIsBanConfirmOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const sortedClients = useMemo(
-    () => sortData(mockClients, sortKey, sortDirection),
-    [sortKey, sortDirection]
+    () => sortData(clients, sortKey, sortDirection),
+    [clients, sortKey, sortDirection]
   );
 
   const paginatedClients = useMemo(() => {
@@ -100,7 +110,54 @@ export default function ClientsPage() {
   };
 
   const handleSave = (data: Partial<Client>) => {
-    console.log("Saving client data:", data);
+    if (selectedClient) {
+      setClients(
+        clients.map((item) =>
+          item.id === selectedClient.id ? { ...item, ...data } : item
+        )
+      );
+      addToast({
+        type: "success",
+        message: `Клиент "${selectedClient.name}" успешно отредактирован`,
+      });
+    }
+  };
+
+  const handleBanClick = () => {
+    setIsBanConfirmOpen(true);
+  };
+
+  const handleBanConfirm = () => {
+    if (selectedClient) {
+      const newBannedStatus = !selectedClient.banned;
+      setClients(
+        clients.map((item) =>
+          item.id === selectedClient.id ? { ...item, banned: newBannedStatus } : item
+        )
+      );
+      setSelectedClient({ ...selectedClient, banned: newBannedStatus });
+      addToast({
+        type: "success",
+        message: `Клиент "${selectedClient.name}" ${newBannedStatus ? "забанен" : "разбанен"}`,
+      });
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedClient) {
+      const deletedName = selectedClient.name;
+      setClients(clients.filter((item) => item.id !== selectedClient.id));
+      setSelectedClient(null);
+      setIsEditModalOpen(false);
+      addToast({
+        type: "success",
+        message: `Клиент "${deletedName}" успешно удален`,
+      });
+    }
   };
 
   const columns = [
@@ -143,6 +200,23 @@ export default function ClientsPage() {
           )}
         >
           {item.subscriptionActive ? "Активна" : "Нет"}
+        </span>
+      ),
+    },
+    {
+      key: "banned",
+      label: "Статус",
+      sortable: true,
+      render: (item: Client) => (
+        <span
+          className={cn(
+            "px-2 py-1 text-xs rounded",
+            item.banned
+              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+              : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+          )}
+        >
+          {item.banned ? "Забанен" : "Активен"}
         </span>
       ),
     },
@@ -221,6 +295,30 @@ export default function ClientsPage() {
         onClose={() => setIsEditModalOpen(false)}
         client={selectedClient}
         onSave={handleSave}
+        onBan={handleBanClick}
+        onDelete={handleDeleteClick}
+      />
+
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Подтверждение удаления"
+        message={`Вы уверены, что хотите удалить клиента "${selectedClient?.name}"? Это действие нельзя отменить.`}
+        confirmText="Удалить"
+        cancelText="Отмена"
+        variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={isBanConfirmOpen}
+        onClose={() => setIsBanConfirmOpen(false)}
+        onConfirm={handleBanConfirm}
+        title={selectedClient?.banned ? "Подтверждение разбана" : "Подтверждение бана"}
+        message={`Вы уверены, что хотите ${selectedClient?.banned ? "разбанить" : "забанить"} клиента "${selectedClient?.name}"?`}
+        confirmText={selectedClient?.banned ? "Разбанить" : "Забанить"}
+        cancelText="Отмена"
+        variant={selectedClient?.banned ? "default" : "danger"}
       />
     </div>
   );

@@ -231,3 +231,4 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
   );
 }
 
+
