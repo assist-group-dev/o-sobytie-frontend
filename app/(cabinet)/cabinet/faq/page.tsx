@@ -114,7 +114,7 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="space-y-3 p-8 pt-20">
+    <div className="space-y-3">
       {CATEGORIES.map((category) => {
         const categoryItems = FAQ_ITEMS.filter((item) => item.category === category);
         const isCategoryOpen = openCategoryName === category;

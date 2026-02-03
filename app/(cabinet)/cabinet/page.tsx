@@ -27,7 +27,7 @@ export default function CabinetPage() {
   };
 
   return (
-    <div className="space-y-8 p-8 pt-16">
+    <div className="space-y-8">
       <div className="flex flex-col gap-0 max-w-2xl">
         <div className="p-6">
           <div className="flex items-center justify-between gap-4">
