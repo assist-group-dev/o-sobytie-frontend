@@ -2,23 +2,24 @@
 
 import { Card } from "@/ui/components/Card";
 
-export function AdminDashboard() {
+export default function GeneralPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold uppercase mb-2">Панель управления</h1>
+        <h1 className="text-3xl font-bold uppercase mb-2">Общие</h1>
         <p className="text-sm text-[var(--foreground)]/60">
-          Добро пожаловать в админ панель
+          Общие настройки
         </p>
       </div>
 
       <Card>
         <div className="p-8 text-center">
           <p className="text-[var(--foreground)]/60">
-            Админ панель готова к разработке
+            Раздел в разработке
           </p>
         </div>
       </Card>
     </div>
   );
 }
+
