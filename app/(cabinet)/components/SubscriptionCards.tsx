@@ -7,6 +7,7 @@ import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { SubscriptionPurchaseModal, SubscriptionFormData } from "./SubscriptionPurchaseModal";
 
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
@@ -94,6 +95,8 @@ export function SubscriptionCards() {
   const [giftTariff, setGiftTariff] = useState<Tariff | null>(null);
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [purchaseTariff, setPurchaseTariff] = useState<Tariff | null>(null);
 
   const userEmail = (userData?.email as string) || "ivan@example.com";
   const maskedEmail = maskEmail(userEmail);
@@ -253,6 +256,11 @@ export function SubscriptionCards() {
               <div className="mt-auto pt-2 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 space-y-2 sm:space-y-3">
                 <Button 
                   size="lg" 
+                  onClick={() => {
+                    setPurchaseTariff(selectedTariff);
+                    setIsPurchaseModalOpen(true);
+                    setSelectedTariff(null);
+                  }}
                   className="w-full uppercase tracking-widest text-sm sm:text-base group/btn transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                 >
                   Оформить подписку
@@ -353,6 +361,61 @@ export function SubscriptionCards() {
           </div>
         )}
       </Modal>
+
+      {purchaseTariff && (
+        <SubscriptionPurchaseModal
+          isOpen={isPurchaseModalOpen}
+          onClose={() => {
+            setIsPurchaseModalOpen(false);
+            setPurchaseTariff(null);
+          }}
+          tariff={{
+            id: purchaseTariff.id,
+            title: purchaseTariff.title,
+            price: purchaseTariff.price,
+          }}
+          onComplete={(data: SubscriptionFormData) => {
+            console.log("Subscription purchase completed:", data);
+            const { setSubscription } = useCabinetStore.getState();
+            const deliveryDateObj = new Date(data.deliveryDate);
+            const deliveryDateFormatted = deliveryDateObj.toLocaleDateString("ru-RU", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+            
+            const timeSlots = [
+              { value: "09:00-12:00", label: "09:00 - 12:00" },
+              { value: "12:00-15:00", label: "12:00 - 15:00" },
+              { value: "15:00-18:00", label: "15:00 - 18:00" },
+              { value: "18:00-21:00", label: "18:00 - 21:00" },
+            ];
+            const deliveryTimeFormatted = timeSlots.find(slot => slot.value === data.deliveryTime)?.label || data.deliveryTime;
+            
+            const premiumLevelNames: Record<string, string> = {
+              elegant: "Элегантный",
+              cozy: "Уютный",
+              special: "Особенный",
+            };
+            
+            setSubscription({
+              title: premiumLevelNames[data.premiumLevel] || data.premiumLevel,
+              duration: purchaseTariff.title,
+              tariff: purchaseTariff.price,
+              deliveryDate: deliveryDateFormatted,
+              deliveryTime: deliveryTimeFormatted,
+              premiumLevel: data.premiumLevel,
+              city: data.city,
+              street: data.street,
+              house: data.house,
+              apartment: data.apartment,
+              phone: data.phone,
+            });
+            setIsPurchaseModalOpen(false);
+            setPurchaseTariff(null);
+          }}
+        />
+      )}
     </div>
   );
 }

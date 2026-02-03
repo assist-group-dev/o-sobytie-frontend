@@ -7,6 +7,7 @@ import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { AuthModal } from "./AuthModal";
 
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
@@ -96,6 +97,7 @@ export function Cards() {
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const isAuthenticated = userData !== null;
   const email = isAuthenticated ? (userData.email as string) : userEmail;
@@ -277,6 +279,12 @@ export function Cards() {
               <div className="mt-auto pt-2 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 space-y-2 sm:space-y-3">
                 <Button 
                   size="lg" 
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setIsAuthModalOpen(true);
+                      setSelectedTariff(null);
+                    }
+                  }}
                   className="w-full uppercase tracking-widest text-sm sm:text-base group/btn transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                 >
                   Оформить подписку
@@ -447,6 +455,8 @@ export function Cards() {
           </div>
         )}
       </Modal>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </section>
   );
 }

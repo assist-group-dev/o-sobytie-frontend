@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
@@ -185,15 +185,8 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
     <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4">
       <div className="p-6 sm:p-8">
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Анкета для организатора</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-[var(--color-cream)] dark:hover:bg-[var(--color-cream)]/30 transition-colors"
-              aria-label="Закрыть"
-            >
-              <X className="h-5 w-5" />
-            </button>
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold">{currentStepData.title}</h2>
           </div>
           <div className="mb-2">
             <div className="h-2 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 overflow-hidden">
@@ -209,7 +202,6 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
         </div>
 
         <div className="mb-6">
-          <h3 className="text-xl font-bold mb-6">{currentStepData.title}</h3>
           <div className="space-y-6">
             {currentStepData.fields.map((field) => (
               <div key={field.key}>

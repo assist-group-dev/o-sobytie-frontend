@@ -1,25 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/ui/components/Button";
 import { User, Package, LogOut, Mail, FileText, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
+import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 
 export default function CabinetPage() {
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isQuestionnaireCompleted, setIsQuestionnaireCompleted] = useState(false);
+  const { subscription } = useCabinetStore();
 
   const user = {
     name: "Иван Иванов",
     email: "ivan@example.com",
-  };
-
-  const subscription = {
-    title: "Премиум",
-    duration: "3 месяца",
-    deliveryDate: "10.03.2025",
-    deliveryTime: "14:00",
   };
 
   const handleLogout = () => {
@@ -63,28 +59,58 @@ export default function CabinetPage() {
           </div>
         </div>
 
-        <div className="p-8 -mt-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
-              <Package className="h-6 w-6 text-[var(--color-golden)]" />
+        {subscription ? (
+          <div className="p-8 -mt-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+                <Package className="h-6 w-6 text-[var(--color-golden)]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold mb-1">{subscription.title}</h3>
+                <p className="text-sm text-[var(--foreground)]/70">{subscription.duration}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold mb-1">{subscription.title}</h3>
-              <p className="text-sm text-[var(--foreground)]/70">{subscription.duration}</p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
-            <div>
-              <p className="text-sm text-[var(--foreground)]/60 mb-2">Дата доставки</p>
-              <p className="text-lg font-medium">{subscription.deliveryDate}</p>
-            </div>
-            <div>
-              <p className="text-sm text-[var(--foreground)]/60 mb-2">Примерное время</p>
-              <p className="text-lg font-medium">{subscription.deliveryTime}</p>
+            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-2">Дата доставки</p>
+                <p className="text-lg font-medium">{subscription.deliveryDate}</p>
+              </div>
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-2">Время доставки</p>
+                <p className="text-lg font-medium">{subscription.deliveryTime}</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-8 -mt-6">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+                  <Package className="h-6 w-6 text-[var(--color-golden)]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-1">Подписка отсутствует</h3>
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Оформите подписку в разделе "Подписка"
+                  </p>
+                </div>
+              </div>
+              <Link href="/cabinet/subscription">
+                <Button
+                  size="sm"
+                  className={cn(
+                    "uppercase tracking-wider shrink-0",
+                    "bg-[var(--color-golden)] text-[var(--background)]",
+                    "hover:opacity-90"
+                  )}
+                >
+                  Оформить
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="p-8 -mt-6">
           {isQuestionnaireCompleted ? (
