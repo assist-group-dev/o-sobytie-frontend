@@ -1,0 +1,25 @@
+{
+  "maintenance": {
+    "enabled": false,
+    "message": "Сайт временно закрыт на техническое обслуживание. Мы вернемся в ближайшее время."
+  },
+  "contacts": {
+    "email": "info@osobytie.com",
+    "phone": "+7 (800) 123-45-67",
+    "address": "г. Волгоград, ул. Примерная, д. 1",
+    "workingHours": "Пн-Пт: 10:00 - 20:00\nСб-Вс: 11:00 - 18:00"
+  },
+  "social": {
+    "telegram": "https://t.me/osobytie",
+    "vk": "https://vk.com/osobytie"
+  },
+  "delivery": {
+    "city": "Волгоград",
+    "deliveryTime": "1-2 рабочих дня"
+  },
+  "notifications": {
+    "adminEmail": "admin@osobytie.com",
+    "enabled": true
+  }
+}
+
