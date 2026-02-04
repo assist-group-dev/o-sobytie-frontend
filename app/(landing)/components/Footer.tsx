@@ -253,15 +253,6 @@ export function Footer() {
             </p>
           </div>
           <div>
-            <h3 className="font-semibold text-lg mb-3">Способы оплаты</h3>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Банковской картой онлайн (Visa, MasterCard, МИР)</li>
-              <li>Электронными кошельками (ЮMoney, Qiwi)</li>
-              <li>Наложенным платежом при получении</li>
-              <li>Банковским переводом</li>
-            </ul>
-          </div>
-          <div>
             <h3 className="font-semibold text-lg mb-3">Стоимость доставки</h3>
             <p>
               Доставка по Волгограду включена в стоимость подписки.
