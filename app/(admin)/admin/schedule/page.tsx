@@ -1,57 +1,76 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { Eye, Edit, Plus } from "lucide-react";
 import { Card } from "@/ui/components/Card";
+import { Button } from "@/ui/components/Button";
 import { Table } from "@/app/(admin)/components/Table";
 import { Pagination } from "@/app/(admin)/components/Pagination";
+import { ScheduleDetailModal } from "@/app/(admin)/components/ScheduleDetailModal";
+import { ScheduleEditModal } from "@/app/(admin)/components/ScheduleEditModal";
+import { ScheduleCreateModal } from "@/app/(admin)/components/ScheduleCreateModal";
+import { ClientDetailModal } from "@/app/(admin)/components/ClientDetailModal";
+import { CounterpartyDetailModal } from "@/app/(admin)/components/CounterpartyDetailModal";
+import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
 
-interface ScheduleItem {
+import scheduleData from "@/app/(admin)/data/schedule.json";
+import clientsData from "@/app/(admin)/data/clients.json";
+import counterpartiesData from "@/app/(admin)/data/counterparties.json";
+
+interface ScheduleEvent {
   id: string;
+  clientId: string;
+  counterpartyId: string;
   date: string;
   time: string;
-  client: string;
-  event: string;
-  status: string;
+  amount: string;
 }
 
-const mockSchedule: ScheduleItem[] = [
-  {
-    id: "1",
-    date: "2024-03-15",
-    time: "10:00",
-    client: "Иван Иванов",
-    event: "Доставка коробки",
-    status: "Запланировано",
-  },
-  {
-    id: "2",
-    date: "2024-03-15",
-    time: "14:00",
-    client: "Мария Петрова",
-    event: "Доставка коробки",
-    status: "В процессе",
-  },
-  {
-    id: "3",
-    date: "2024-03-16",
-    time: "11:00",
-    client: "Алексей Сидоров",
-    event: "Доставка коробки",
-    status: "Запланировано",
-  },
-];
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  eventDate: string;
+  questionnaireCompleted: boolean;
+  subscriptionActive: boolean;
+  questionnaire: any;
+  subscription: any;
+}
+
+interface Counterparty {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  contactPerson: string;
+  description: string;
+}
+
+const mockSchedule: ScheduleEvent[] = scheduleData as ScheduleEvent[];
+const clients: Client[] = clientsData as Client[];
+const counterparties: Counterparty[] = counterpartiesData as Counterparty[];
 
 export default function SchedulePage() {
+  const addToast = useToastStore((state) => state.addToast);
+  const [schedule, setSchedule] = useState<ScheduleEvent[]>(mockSchedule);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [selectedCounterparty, setSelectedCounterparty] = useState<Counterparty | null>(null);
+  const [isCounterpartyModalOpen, setIsCounterpartyModalOpen] = useState(false);
 
   const sortedData = useMemo(
-    () => sortData(mockSchedule, sortKey, sortDirection),
-    [sortKey, sortDirection]
+    () => sortData(schedule, sortKey, sortDirection),
+    [schedule, sortKey, sortDirection]
   );
 
   const paginatedData = useMemo(() => {
@@ -77,36 +96,186 @@ export default function SchedulePage() {
     setCurrentPage(1);
   };
 
+  const handleView = (event: ScheduleEvent) => {
+    setSelectedEvent(event);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleEdit = (event: ScheduleEvent) => {
+    setSelectedEvent(event);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSave = (updatedEvent: ScheduleEvent) => {
+    setSchedule(schedule.map((item) => (item.id === updatedEvent.id ? updatedEvent : item)));
+    setIsEditModalOpen(false);
+    setSelectedEvent(null);
+    addToast({
+      type: "success",
+      message: "Мероприятие успешно обновлено",
+    });
+  };
+
+  const handleCreate = (newEvent: Omit<ScheduleEvent, "id">) => {
+    const createdEvent: ScheduleEvent = {
+      ...newEvent,
+      id: String(schedule.length + 1),
+    };
+    setSchedule([...schedule, createdEvent]);
+    addToast({
+      type: "success",
+      message: "Мероприятие успешно создано",
+    });
+  };
+
+  const handleClientClick = (e: React.MouseEvent, clientId: string) => {
+    e.stopPropagation();
+    const client = clients.find((c) => c.id === clientId);
+    if (client) {
+      setSelectedClient(client);
+      setIsClientModalOpen(true);
+    }
+  };
+
+  const handleCounterpartyClick = (e: React.MouseEvent, counterpartyId: string) => {
+    e.stopPropagation();
+    const counterparty = counterparties.find((cp) => cp.id === counterpartyId);
+    if (counterparty) {
+      setSelectedCounterparty(counterparty);
+      setIsCounterpartyModalOpen(true);
+    }
+  };
+
+  const getClientById = (id: string) => clients.find((c) => c.id === id);
+  const getCounterpartyById = (id: string) => counterparties.find((cp) => cp.id === id);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const formatAmount = (amount: string) => {
+    return `${parseInt(amount).toLocaleString("ru-RU")} ₽`;
+  };
+
   const columns = [
-    { key: "date", label: "Дата", sortable: true },
-    { key: "time", label: "Время", sortable: true },
-    { key: "client", label: "Клиент", sortable: true },
-    { key: "event", label: "Событие", sortable: true },
     {
-      key: "status",
-      label: "Статус",
+      key: "client",
+      label: "Клиент",
       sortable: true,
-      render: (item: ScheduleItem) => (
-        <span
-          className={cn(
-            "px-2 py-1 text-xs rounded",
-            item.status === "Запланировано"
-              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-              : item.status === "В процессе"
-              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-              : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-          )}
-        >
-          {item.status}
-        </span>
+      render: (item: ScheduleEvent) => {
+        const client = getClientById(item.clientId);
+        if (!client) return <span className="text-[var(--foreground)]/50">Не найден</span>;
+        return (
+          <button
+            onClick={(e) => handleClientClick(e, item.clientId)}
+            className={cn(
+              "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
+              "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+              "hover:bg-blue-200 dark:hover:bg-blue-900/50"
+            )}
+          >
+            {client.name}
+          </button>
+        );
+      },
+    },
+    {
+      key: "counterparty",
+      label: "Контрагент",
+      sortable: true,
+      render: (item: ScheduleEvent) => {
+        const counterparty = getCounterpartyById(item.counterpartyId);
+        if (!counterparty) return <span className="text-[var(--foreground)]/50">Не найден</span>;
+        return (
+          <button
+            onClick={(e) => handleCounterpartyClick(e, item.counterpartyId)}
+            className={cn(
+              "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
+              "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+              "hover:bg-purple-200 dark:hover:bg-purple-900/50"
+            )}
+          >
+            {counterparty.name}
+          </button>
+        );
+      },
+    },
+    {
+      key: "date",
+      label: "Дата",
+      sortable: true,
+      render: (item: ScheduleEvent) => formatDate(item.date),
+    },
+    {
+      key: "time",
+      label: "Время",
+      sortable: true,
+      render: (item: ScheduleEvent) => item.time,
+    },
+    {
+      key: "amount",
+      label: "Сумма",
+      sortable: true,
+      render: (item: ScheduleEvent) => (
+        <span className="font-medium text-[var(--color-golden)]">{formatAmount(item.amount)}</span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "Действия",
+      sortable: false,
+      render: (item: ScheduleEvent) => (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="text"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleView(item);
+            }}
+            className="p-1.5"
+            title="Просмотр"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="text"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(item);
+            }}
+            className="p-1.5"
+            title="Редактировать"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold uppercase mb-2">Расписание</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold uppercase mb-2">Расписание</h1>
+          <p className="text-sm text-[var(--foreground)]/60">
+            Управление расписанием мероприятий
+          </p>
+        </div>
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Создать мероприятие
+        </Button>
       </div>
 
       <Card className="p-0 overflow-hidden">
@@ -117,6 +286,7 @@ export default function SchedulePage() {
             sortKey={sortKey || undefined}
             sortDirection={sortDirection}
             onSort={handleSort}
+            onRowClick={handleView}
           />
         </div>
         <div className="p-6">
@@ -131,7 +301,63 @@ export default function SchedulePage() {
           />
         </div>
       </Card>
+
+      {selectedEvent && (
+        <ScheduleDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => {
+            setIsDetailModalOpen(false);
+            setSelectedEvent(null);
+          }}
+          event={selectedEvent}
+          client={getClientById(selectedEvent.clientId) || null}
+          counterparty={getCounterpartyById(selectedEvent.counterpartyId) || null}
+        />
+      )}
+
+      <ScheduleCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        clients={clients}
+        counterparties={counterparties}
+        onCreate={handleCreate}
+      />
+
+      {selectedEvent && (
+        <ScheduleEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedEvent(null);
+          }}
+          event={selectedEvent}
+          clients={clients}
+          counterparties={counterparties}
+          onSave={handleSave}
+        />
+      )}
+
+      {selectedClient && (
+        <ClientDetailModal
+          isOpen={isClientModalOpen}
+          onClose={() => {
+            setIsClientModalOpen(false);
+            setSelectedClient(null);
+          }}
+          client={selectedClient}
+        />
+      )}
+
+      {selectedCounterparty && (
+        <CounterpartyDetailModal
+          isOpen={isCounterpartyModalOpen}
+          onClose={() => {
+            setIsCounterpartyModalOpen(false);
+            setSelectedCounterparty(null);
+          }}
+          counterparty={selectedCounterparty}
+        />
+      )}
     </div>
   );
 }
-

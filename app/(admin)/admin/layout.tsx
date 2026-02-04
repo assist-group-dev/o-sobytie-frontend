@@ -16,7 +16,7 @@ interface AdminLayoutProps {
 const navigation = [
   { id: "clients", label: "Клиенты", href: "/admin/clients", icon: Users, enabled: true },
   { id: "counterparties", label: "Контрагенты", href: "/admin/counterparties", icon: Building2, enabled: true },
-  { id: "schedule", label: "Расписание", href: "/admin/schedule", icon: Calendar, enabled: false },
+  { id: "schedule", label: "Расписание", href: "/admin/schedule", icon: Calendar, enabled: true },
   { id: "tariffs", label: "Тарифы", href: "/admin/tariffs", icon: Tag, enabled: true },
   { id: "requests", label: "Обращения", href: "/admin/requests", icon: MessageSquare, enabled: true },
   { id: "promocodes", label: "Промокоды", href: "/admin/promocodes", icon: Ticket, enabled: true },

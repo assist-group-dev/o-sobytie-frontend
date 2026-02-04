@@ -1,0 +1,243 @@
+[
+  {
+    "id": "1",
+    "clientId": "1",
+    "counterpartyId": "1",
+    "date": "2024-05-15",
+    "time": "14:00",
+    "amount": "15000"
+  },
+  {
+    "id": "2",
+    "clientId": "2",
+    "counterpartyId": "2",
+    "date": "2024-05-16",
+    "time": "18:00",
+    "amount": "20000"
+  },
+  {
+    "id": "3",
+    "clientId": "3",
+    "counterpartyId": "3",
+    "date": "2024-05-17",
+    "time": "12:00",
+    "amount": "12000"
+  },
+  {
+    "id": "4",
+    "clientId": "4",
+    "counterpartyId": "4",
+    "date": "2024-05-18",
+    "time": "16:00",
+    "amount": "18000"
+  },
+  {
+    "id": "5",
+    "clientId": "5",
+    "counterpartyId": "5",
+    "date": "2024-05-19",
+    "time": "10:00",
+    "amount": "25000"
+  },
+  {
+    "id": "6",
+    "clientId": "6",
+    "counterpartyId": "6",
+    "date": "2024-05-20",
+    "time": "15:00",
+    "amount": "22000"
+  },
+  {
+    "id": "7",
+    "clientId": "7",
+    "counterpartyId": "7",
+    "date": "2024-05-21",
+    "time": "19:00",
+    "amount": "30000"
+  },
+  {
+    "id": "8",
+    "clientId": "8",
+    "counterpartyId": "8",
+    "date": "2024-05-22",
+    "time": "11:00",
+    "amount": "14000"
+  },
+  {
+    "id": "9",
+    "clientId": "9",
+    "counterpartyId": "9",
+    "date": "2024-05-23",
+    "time": "17:00",
+    "amount": "19000"
+  },
+  {
+    "id": "10",
+    "clientId": "10",
+    "counterpartyId": "10",
+    "date": "2024-05-24",
+    "time": "13:00",
+    "amount": "16000"
+  },
+  {
+    "id": "11",
+    "clientId": "11",
+    "counterpartyId": "11",
+    "date": "2024-05-25",
+    "time": "14:30",
+    "amount": "21000"
+  },
+  {
+    "id": "12",
+    "clientId": "12",
+    "counterpartyId": "12",
+    "date": "2024-05-26",
+    "time": "16:30",
+    "amount": "17000"
+  },
+  {
+    "id": "13",
+    "clientId": "13",
+    "counterpartyId": "13",
+    "date": "2024-05-27",
+    "time": "12:30",
+    "amount": "23000"
+  },
+  {
+    "id": "14",
+    "clientId": "14",
+    "counterpartyId": "14",
+    "date": "2024-05-28",
+    "time": "18:30",
+    "amount": "27000"
+  },
+  {
+    "id": "15",
+    "clientId": "15",
+    "counterpartyId": "15",
+    "date": "2024-05-29",
+    "time": "10:30",
+    "amount": "13000"
+  },
+  {
+    "id": "16",
+    "clientId": "16",
+    "counterpartyId": "16",
+    "date": "2024-05-30",
+    "time": "15:30",
+    "amount": "24000"
+  },
+  {
+    "id": "17",
+    "clientId": "17",
+    "counterpartyId": "17",
+    "date": "2024-05-31",
+    "time": "11:30",
+    "amount": "20000"
+  },
+  {
+    "id": "18",
+    "clientId": "18",
+    "counterpartyId": "18",
+    "date": "2024-06-01",
+    "time": "17:30",
+    "amount": "28000"
+  },
+  {
+    "id": "19",
+    "clientId": "19",
+    "counterpartyId": "19",
+    "date": "2024-06-02",
+    "time": "13:30",
+    "amount": "15000"
+  },
+  {
+    "id": "20",
+    "clientId": "20",
+    "counterpartyId": "20",
+    "date": "2024-06-03",
+    "time": "19:30",
+    "amount": "32000"
+  },
+  {
+    "id": "21",
+    "clientId": "21",
+    "counterpartyId": "21",
+    "date": "2024-06-04",
+    "time": "14:00",
+    "amount": "18000"
+  },
+  {
+    "id": "22",
+    "clientId": "22",
+    "counterpartyId": "22",
+    "date": "2024-06-05",
+    "time": "16:00",
+    "amount": "26000"
+  },
+  {
+    "id": "23",
+    "clientId": "23",
+    "counterpartyId": "23",
+    "date": "2024-06-06",
+    "time": "12:00",
+    "amount": "14000"
+  },
+  {
+    "id": "24",
+    "clientId": "24",
+    "counterpartyId": "24",
+    "date": "2024-06-07",
+    "time": "18:00",
+    "amount": "29000"
+  },
+  {
+    "id": "25",
+    "clientId": "25",
+    "counterpartyId": "25",
+    "date": "2024-06-08",
+    "time": "10:00",
+    "amount": "16000"
+  },
+  {
+    "id": "26",
+    "clientId": "26",
+    "counterpartyId": "26",
+    "date": "2024-06-09",
+    "time": "15:00",
+    "amount": "22000"
+  },
+  {
+    "id": "27",
+    "clientId": "27",
+    "counterpartyId": "27",
+    "date": "2024-06-10",
+    "time": "17:00",
+    "amount": "31000"
+  },
+  {
+    "id": "28",
+    "clientId": "28",
+    "counterpartyId": "28",
+    "date": "2024-06-11",
+    "time": "11:00",
+    "amount": "19000"
+  },
+  {
+    "id": "29",
+    "clientId": "29",
+    "counterpartyId": "29",
+    "date": "2024-06-12",
+    "time": "19:00",
+    "amount": "33000"
+  },
+  {
+    "id": "30",
+    "clientId": "30",
+    "counterpartyId": "30",
+    "date": "2024-06-13",
+    "time": "13:00",
+    "amount": "17000"
+  }
+]
+
