@@ -25,8 +25,6 @@ interface Request {
   status: RequestStatus;
 }
 
-const STATUS_OPTIONS: RequestStatus[] = ["Новый", "Просмотрен", "Отвечен", "В работе", "Решен"];
-
 import requestsData from "@/app/(admin)/data/requests.json";
 
 const mockRequests: Request[] = (requestsData as Request[]).map((request) => ({
