@@ -104,7 +104,7 @@ export function Table<T>({
                     <div 
                       className="relative"
                       ref={(el) => {
-                        if (column.sortable && onSort) {
+                        if (column.sortable) {
                           dropdownRefs.current[column.key] = el;
                         }
                       }}
