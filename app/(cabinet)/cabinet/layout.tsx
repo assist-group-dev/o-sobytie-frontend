@@ -139,7 +139,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
               <form onSubmit={handlePromoSubmit} className="space-y-2">
                 <p className="text-xs font-medium text-[var(--foreground)]/70 mb-2 flex items-center gap-1">
                   <Ticket className="h-3 w-3" />
-                  Есть промо код?
+                  Есть промокод?
                 </p>
                 <div className="flex gap-2">
                   <input

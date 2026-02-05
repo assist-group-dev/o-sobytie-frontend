@@ -15,6 +15,7 @@ interface Request {
   email: string;
   subject: string;
   contactMethod: string;
+  contactData?: string;
   createdAt: string;
   message: string;
   status: RequestStatus;
@@ -33,17 +34,17 @@ const STATUS_OPTIONS: RequestStatus[] = ["Новый", "Просмотрен", "
 const getStatusColor = (status: RequestStatus) => {
   switch (status) {
     case "Новый":
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
     case "Просмотрен":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400";
+      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100";
     case "Отвечен":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100";
     case "В работе":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
     case "Решен":
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
   }
 };
 
@@ -109,8 +110,8 @@ function StatusDropdown({
               type="button"
               onClick={() => handleSelect(status)}
               className={cn(
-                "w-full px-3 py-2 text-xs text-left transition-colors first:rounded-t last:rounded-b",
-                "hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20",
+                "w-full px-3 py-2 text-xs text-left transition-all first:rounded-t last:rounded-b",
+                "hover:brightness-90 hover:shadow-sm",
                 value === status &&
                   "bg-[var(--color-golden)]/10 text-[var(--color-golden)] font-medium",
                 getStatusColor(status)
@@ -180,9 +181,16 @@ export function RequestDetailModal({ isOpen, onClose, request, onStatusChange, o
               </div>
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Способ связи</p>
-                <p className="font-medium">
-                  {contactMethodNames[request.contactMethod] || request.contactMethod}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <p className="font-medium">
+                    {contactMethodNames[request.contactMethod] || request.contactMethod}
+                  </p>
+                  {request.contactData && (
+                    <p className="text-sm text-[var(--foreground)]/70">
+                      {request.contactData}
+                    </p>
+                  )}
+                </div>
               </div>
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Время создания</p>

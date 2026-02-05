@@ -20,6 +20,7 @@ interface Counterparty {
   phone: string;
   contactPerson: string;
   description: string;
+  event?: string;
 }
 
 import counterpartiesData from "@/app/(admin)/data/counterparties.json";
@@ -122,6 +123,7 @@ export default function CounterpartiesPage() {
 
   const columns = [
     { key: "name", label: "Название", sortable: true },
+    { key: "event", label: "Событие", sortable: true },
     { key: "address", label: "Адрес", sortable: true },
     { key: "phone", label: "Номер телефона", sortable: true },
     { key: "contactPerson", label: "Имя контактного лица", sortable: true },

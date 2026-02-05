@@ -20,6 +20,7 @@ interface Request {
   email: string;
   subject: string;
   contactMethod: string;
+  contactData?: string;
   createdAt: string;
   message: string;
   status: RequestStatus;
@@ -41,17 +42,17 @@ const contactMethodNames: Record<string, string> = {
 const getStatusColor = (status: RequestStatus) => {
   switch (status) {
     case "Новый":
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
     case "Просмотрен":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400";
+      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100";
     case "Отвечен":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
+      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100";
     case "В работе":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
     case "Решен":
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
   }
 };
 
@@ -153,9 +154,16 @@ export default function RequestsPage() {
       label: "Способ связи",
       sortable: true,
       render: (item: Request) => (
-        <span className="font-medium">
-          {contactMethodNames[item.contactMethod] || item.contactMethod}
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">
+            {contactMethodNames[item.contactMethod] || item.contactMethod}
+          </span>
+          {item.contactData && (
+            <span className="text-xs text-[var(--foreground)]/60">
+              {item.contactData}
+            </span>
+          )}
+        </div>
       ),
     },
     {

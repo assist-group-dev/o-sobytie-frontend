@@ -12,6 +12,7 @@ interface Counterparty {
   phone: string;
   contactPerson: string;
   description: string;
+  event?: string;
 }
 
 interface CounterpartyCreateModalProps {
@@ -27,6 +28,7 @@ export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: Counterpa
     phone: "",
     contactPerson: "",
     description: "",
+    event: "",
   });
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: Counterpa
         phone: "",
         contactPerson: "",
         description: "",
+        event: "",
       });
     }
   }, [isOpen]);
@@ -54,6 +57,24 @@ export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: Counterpa
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
+            <div>
+              <label htmlFor="event" className="block text-sm font-medium mb-2">
+                Событие
+              </label>
+              <input
+                id="event"
+                type="text"
+                value={formData.event}
+                onChange={(e) => setFormData({ ...formData, event: e.target.value })}
+                placeholder="Например: квест, свидание, мастер-класс"
+                className={cn(
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "bg-[var(--background)] text-[var(--foreground)]",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                )}
+              />
+            </div>
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium mb-2">
                 Название

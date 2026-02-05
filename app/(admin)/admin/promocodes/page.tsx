@@ -140,8 +140,8 @@ export default function PromocodesPage() {
           className={cn(
             "px-2 py-1 text-xs rounded",
             item.isClient
-              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-              : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
+              ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+              : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
           )}
         >
           {item.isClient ? "Клиентский" : "Админский"}

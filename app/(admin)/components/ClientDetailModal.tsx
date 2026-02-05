@@ -84,8 +84,8 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
                   className={cn(
                     "px-2 py-1 text-xs rounded inline-block",
                     client.questionnaireCompleted
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
                   )}
                 >
                   {client.questionnaireCompleted ? "Пройдена" : "Не пройдена"}
@@ -97,8 +97,8 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
                   className={cn(
                     "px-2 py-1 text-xs rounded inline-block",
                     client.subscriptionActive
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
                   )}
                 >
                   {client.subscriptionActive ? "Активна" : "Не активна"}
@@ -106,6 +106,51 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
               </div>
             </div>
           </Card>
+
+          {client.subscriptionActive && client.subscription && (
+            <Card>
+              <h3 className="text-lg font-bold mb-4">Данные подписки</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Тариф</p>
+                    <p className="font-medium">{client.subscription.tariff}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Длительность</p>
+                    <p className="font-medium">{client.subscription.duration}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Уровень премиальности</p>
+                    <p className="font-medium">
+                      {premiumLevelNames[client.subscription.premiumLevel] || client.subscription.premiumLevel}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Телефон</p>
+                    <p className="font-medium">{client.subscription.phone}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-[var(--foreground)]/60 mb-1">Адрес доставки</p>
+                  <p className="font-medium">
+                    {client.subscription.city}, {client.subscription.street}, д. {client.subscription.house}
+                    {client.subscription.apartment && `, кв. ${client.subscription.apartment}`}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Дата доставки</p>
+                    <p className="font-medium">{client.subscription.deliveryDate}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Время доставки</p>
+                    <p className="font-medium">{client.subscription.deliveryTime}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {client.questionnaireCompleted && client.questionnaire && (
             <Card>
@@ -177,51 +222,6 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
                     <p className="font-medium">{client.questionnaire.additionalInfo || "Не указаны"}</p>
                   </div>
                 )}
-              </div>
-            </Card>
-          )}
-
-          {client.subscriptionActive && client.subscription && (
-            <Card>
-              <h3 className="text-lg font-bold mb-4">Данные подписки</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Тариф</p>
-                    <p className="font-medium">{client.subscription.tariff}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Длительность</p>
-                    <p className="font-medium">{client.subscription.duration}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Уровень премиальности</p>
-                    <p className="font-medium">
-                      {premiumLevelNames[client.subscription.premiumLevel] || client.subscription.premiumLevel}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Телефон</p>
-                    <p className="font-medium">{client.subscription.phone}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-[var(--foreground)]/60 mb-1">Адрес доставки</p>
-                  <p className="font-medium">
-                    {client.subscription.city}, {client.subscription.street}, д. {client.subscription.house}
-                    {client.subscription.apartment && `, кв. ${client.subscription.apartment}`}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Дата доставки</p>
-                    <p className="font-medium">{client.subscription.deliveryDate}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Время доставки</p>
-                    <p className="font-medium">{client.subscription.deliveryTime}</p>
-                  </div>
-                </div>
               </div>
             </Card>
           )}

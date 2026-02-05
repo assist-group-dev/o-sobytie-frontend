@@ -10,6 +10,7 @@ interface Counterparty {
   phone: string;
   contactPerson: string;
   description: string;
+  event?: string;
 }
 
 interface CounterpartyDetailModalProps {
@@ -30,6 +31,10 @@ export function CounterpartyDetailModal({ isOpen, onClose, counterparty }: Count
           <Card>
             <h3 className="text-lg font-bold mb-4">Основная информация</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Событие</p>
+                <p className="font-medium">{counterparty.event || "Не указано"}</p>
+              </div>
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Название</p>
                 <p className="font-medium">{counterparty.name}</p>

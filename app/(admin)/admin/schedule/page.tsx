@@ -46,6 +46,7 @@ interface Counterparty {
   phone: string;
   contactPerson: string;
   description: string;
+  event?: string;
 }
 
 const mockSchedule: ScheduleEvent[] = scheduleData as ScheduleEvent[];
@@ -175,8 +176,8 @@ export default function SchedulePage() {
             onClick={(e) => handleClientClick(e, item.clientId)}
             className={cn(
               "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
-              "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-              "hover:bg-blue-200 dark:hover:bg-blue-900/50"
+              "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
+              "hover:bg-blue-200 dark:hover:bg-blue-800"
             )}
           >
             {client.name}
@@ -186,21 +187,22 @@ export default function SchedulePage() {
     },
     {
       key: "counterparty",
-      label: "Контрагент",
+      label: "Событие",
       sortable: true,
       render: (item: ScheduleEvent) => {
         const counterparty = getCounterpartyById(item.counterpartyId);
         if (!counterparty) return <span className="text-[var(--foreground)]/50">Не найден</span>;
+        const eventText = counterparty.event || "Не указано";
         return (
           <button
             onClick={(e) => handleCounterpartyClick(e, item.counterpartyId)}
             className={cn(
               "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
-              "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-              "hover:bg-purple-200 dark:hover:bg-purple-900/50"
+              "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100",
+              "hover:bg-purple-200 dark:hover:bg-purple-800"
             )}
           >
-            {counterparty.name}
+            {eventText}
           </button>
         );
       },
