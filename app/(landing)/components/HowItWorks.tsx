@@ -59,7 +59,7 @@ export function HowItWorks() {
                 </div>
               </div>
 
-              <div className="flex-1 text-center lg:text-left w-full">
+              <div className={`flex-1 text-center lg:text-left w-full ${index === 1 ? "sm:pl-10 md:pl-16 lg:pl-0" : ""}`}>
                 <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3 mb-4 sm:mb-6">
                   <span className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[var(--color-golden)]/20 dark:text-[var(--color-golden)]/30">
                     {step.number}
