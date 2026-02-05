@@ -53,13 +53,9 @@ export default function CounterpartiesPage() {
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
-  const handleSort = (key: string) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection("asc");
-    }
+  const handleSort = (key: string, direction: "asc" | "desc") => {
+    setSortKey(key);
+    setSortDirection(direction);
     setCurrentPage(1);
   };
 

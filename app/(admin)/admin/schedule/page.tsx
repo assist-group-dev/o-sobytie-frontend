@@ -69,10 +69,21 @@ export default function SchedulePage() {
   const [selectedCounterparty, setSelectedCounterparty] = useState<Counterparty | null>(null);
   const [isCounterpartyModalOpen, setIsCounterpartyModalOpen] = useState(false);
 
-  const sortedData = useMemo(
-    () => sortData(schedule, sortKey, sortDirection),
-    [schedule, sortKey, sortDirection]
-  );
+  const getClientById = (id: string) => clients.find((c) => c.id === id);
+  const getCounterpartyById = (id: string) => counterparties.find((cp) => cp.id === id);
+
+  const sortedData = useMemo(() => {
+    const dataWithSortValues = schedule.map((item) => {
+      const client = getClientById(item.clientId);
+      const counterparty = getCounterpartyById(item.counterpartyId);
+      return {
+        ...item,
+        _clientName: client?.name || "",
+        _eventName: counterparty?.event || "Не указано",
+      };
+    });
+    return sortData(dataWithSortValues, sortKey, sortDirection);
+  }, [schedule, sortKey, sortDirection]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -82,13 +93,9 @@ export default function SchedulePage() {
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
-  const handleSort = (key: string) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection("asc");
-    }
+  const handleSort = (key: string, direction: "asc" | "desc") => {
+    setSortKey(key);
+    setSortDirection(direction);
     setCurrentPage(1);
   };
 
@@ -147,9 +154,6 @@ export default function SchedulePage() {
     }
   };
 
-  const getClientById = (id: string) => clients.find((c) => c.id === id);
-  const getCounterpartyById = (id: string) => counterparties.find((cp) => cp.id === id);
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ru-RU", {
@@ -165,7 +169,7 @@ export default function SchedulePage() {
 
   const columns = [
     {
-      key: "client",
+      key: "_clientName",
       label: "Клиент",
       sortable: true,
       render: (item: ScheduleEvent) => {
@@ -186,7 +190,7 @@ export default function SchedulePage() {
       },
     },
     {
-      key: "counterparty",
+      key: "_eventName",
       label: "Событие",
       sortable: true,
       render: (item: ScheduleEvent) => {
