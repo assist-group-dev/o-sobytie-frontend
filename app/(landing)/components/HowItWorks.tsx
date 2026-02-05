@@ -33,7 +33,7 @@ export function HowItWorks() {
             Как это работает
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-[var(--foreground)]/70 max-w-2xl mx-auto">
-            От скучных свиданий — к незабываемым моментам. Всего за 3 шага.
+            От скучных свиданий — к незабываемым моментам. <span className="whitespace-nowrap">Всего за 3 шага.</span>
           </p>
           <p className="text-sm sm:text-base lg:text-lg text-[var(--foreground)]/60 mt-3 sm:mt-4 max-w-2xl mx-auto">
             Мы взяли на себя все сложности организации, чтобы вы могли сосредоточиться только друг на друге.
@@ -59,7 +59,7 @@ export function HowItWorks() {
                 </div>
               </div>
 
-              <div className={`flex-1 text-center lg:text-left w-full ${index === 1 ? "sm:pl-10 md:pl-16 lg:pl-0" : ""}`}>
+              <div className={`flex-1 text-center lg:text-left w-full ${index === 1 ? "sm:pl-6 md:pl-10 lg:pl-16 xl:pl-0" : ""}`}>
                 <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3 mb-4 sm:mb-6">
                   <span className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[var(--color-golden)]/20 dark:text-[var(--color-golden)]/30">
                     {step.number}
