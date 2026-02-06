@@ -27,7 +27,7 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <section id="how-it-works" className="pt-8 sm:pt-10 lg:pt-16 pb-12 sm:pb-16 lg:pb-32 bg-[var(--background)]">
-      <div className="container mx-auto px-4 sm:px-6">
+      <div className="container mx-auto px-4 sm:px-6 xl:px-10 2xl:px-16">
         <div className="max-w-4xl mx-auto text-center mb-10 sm:mb-12 lg:mb-16">
           <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold mb-4 sm:mb-6 uppercase tracking-wider">
             Как это работает
@@ -59,7 +59,7 @@ export function HowItWorks() {
                 </div>
               </div>
 
-              <div className={`flex-1 text-center lg:text-left w-full ${index === 1 ? "sm:pl-6 md:pl-10 lg:pl-16 xl:pl-0" : ""}`}>
+              <div className={`flex-1 text-center lg:text-left w-full ${index === 1 ? "sm:pl-6 md:pl-10 lg:pl-16 xl:pl-12 2xl:pl-20" : ""}`}>
                 <div className="flex items-center justify-center lg:justify-start gap-2 sm:gap-3 mb-4 sm:mb-6">
                   <span className="text-5xl sm:text-6xl lg:text-7xl font-bold text-[var(--color-golden)]/20 dark:text-[var(--color-golden)]/30">
                     {step.number}
