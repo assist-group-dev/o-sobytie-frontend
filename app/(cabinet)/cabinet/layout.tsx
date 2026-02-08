@@ -83,7 +83,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-32 pb-4 sm:pb-6">
+      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-32 xl:pt-48 pb-4 sm:pb-6">
         <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
           <aside
             className={cn(
