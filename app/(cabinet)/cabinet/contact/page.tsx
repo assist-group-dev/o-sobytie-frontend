@@ -70,10 +70,7 @@ export default function ContactPage() {
   return (
     <div className="space-y-6 sm:space-y-8 -mt-8 sm:-mt-12 lg:-mt-16">
       <div className="flex flex-col gap-0 max-w-2xl">
-        <div className="p-4 sm:p-8">
-          <p className="text-sm sm:text-base text-[var(--foreground)]/70 mb-6 sm:mb-8">
-            Свяжитесь с нами через удобный для вас канал
-          </p>
+        <div className="p-4 sm:p-8 pt-14 sm:pt-18">
           <div className="space-y-3 sm:space-y-4">
             {CONTACT_OPTIONS.map((option) => (
               <a
@@ -117,9 +114,6 @@ export default function ContactPage() {
         </div>
 
         <div className="p-4 sm:p-8 -mt-4 sm:-mt-6">
-          <p className="text-sm sm:text-base text-[var(--foreground)]/70 mb-6 sm:mb-8">
-            Или оставьте заявку, и мы свяжемся с вами в ближайшее время
-          </p>
           <Button
             size="lg"
             className="w-full uppercase tracking-wider flex items-center justify-center"
