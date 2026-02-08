@@ -71,7 +71,6 @@ export default function ContactPage() {
     <div className="space-y-6 sm:space-y-8 -mt-8 sm:-mt-12 lg:-mt-16">
       <div className="flex flex-col gap-0 max-w-2xl">
         <div className="p-4 sm:p-8">
-          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Способы связи</h2>
           <p className="text-sm sm:text-base text-[var(--foreground)]/70 mb-6 sm:mb-8">
             Свяжитесь с нами через удобный для вас канал
           </p>
