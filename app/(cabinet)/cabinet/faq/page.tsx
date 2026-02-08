@@ -122,7 +122,7 @@ export default function FAQPage() {
         return (
           <div
             key={category}
-            className="bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 overflow-hidden"
+            className="bg-[var(--color-cream)]/60 dark:bg-[var(--color-cream)]/10 overflow-hidden"
           >
             <button
               onClick={() => handleCategoryToggle(category)}

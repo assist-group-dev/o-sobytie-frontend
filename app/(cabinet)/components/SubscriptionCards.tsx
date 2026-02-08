@@ -143,14 +143,14 @@ export function SubscriptionCards() {
   };
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {TARIFFS.map((tariff) => (
           <div
             key={tariff.id}
             className="group cursor-pointer"
             onClick={() => setSelectedTariff(tariff)}
           >
-            <div className="relative aspect-square mb-6 overflow-hidden bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20">
+            <div className="relative aspect-square mb-6 overflow-hidden bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20">
               <Image
                 src={tariff.image}
                 alt={tariff.title}
@@ -217,7 +217,7 @@ export function SubscriptionCards() {
         {selectedTariff && (
           <div className="flex flex-col lg:flex-row lg:items-stretch">
             <div className="relative w-full h-[400px] sm:h-[450px] lg:h-auto lg:w-[55%] order-1 flex-shrink-0 lg:aspect-square">
-              <div className="relative h-full w-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20">
+              <div className="relative h-full w-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20">
                 <Image
                   src={selectedTariff.image}
                   alt={selectedTariff.title}
@@ -298,7 +298,7 @@ export function SubscriptionCards() {
               </p>
             </div>
 
-            <div className="mb-4 sm:mb-6 p-4 sm:p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 border-2 border-[var(--color-golden)]">
+            <div className="mb-4 sm:mb-6 p-4 sm:p-6 bg-[var(--color-cream)]/60 dark:bg-[var(--color-cream)]/10 border-2 border-[var(--color-golden)]">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">Промокод</p>
@@ -326,7 +326,7 @@ export function SubscriptionCards() {
               </div>
             </div>
 
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-[var(--color-cream)]/10 dark:bg-[var(--color-cream)]/5 flex items-start gap-2 sm:gap-3">
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-[var(--color-cream)]/40 dark:bg-[var(--color-cream)]/5 flex items-start gap-2 sm:gap-3">
               <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-golden)] shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
                 <p className="text-xs sm:text-sm text-[var(--foreground)]/70 mb-1">

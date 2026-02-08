@@ -70,7 +70,7 @@ export default function ContactPage() {
   return (
     <div className="space-y-6 sm:space-y-8 -mt-8 sm:-mt-12 lg:-mt-16">
       <div className="flex flex-col gap-0 max-w-2xl">
-        <div className="p-4 sm:p-8 pt-14 sm:pt-18">
+        <div className="p-4 sm:p-8 pt-14 sm:pt-18 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           <div className="space-y-3 sm:space-y-4">
             {CONTACT_OPTIONS.map((option) => (
               <a
@@ -91,7 +91,7 @@ export default function ContactPage() {
               </a>
             ))}
             
-            <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10">
+            <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 bg-[var(--color-cream)]/60 dark:bg-[var(--color-cream)]/10">
               <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--color-golden)] flex-shrink-0" />
               <span className="font-medium text-sm sm:text-base flex-1 min-w-0 truncate">{EMAIL}</span>
               <button
@@ -113,7 +113,7 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <div className="p-4 sm:p-8 -mt-4 sm:-mt-6">
+        <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           <Button
             size="lg"
             className="w-full uppercase tracking-wider flex items-center justify-center"
@@ -181,7 +181,7 @@ export default function ContactPage() {
                 value={formData.contact}
                 onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
                 className={cn(
-                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                 )}
@@ -206,7 +206,7 @@ export default function ContactPage() {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 className={cn(
-                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                 )}
@@ -225,7 +225,7 @@ export default function ContactPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 className={cn(
-                  "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                  "w-full px-4 py-2 border-2 border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]",
                   "resize-none"
