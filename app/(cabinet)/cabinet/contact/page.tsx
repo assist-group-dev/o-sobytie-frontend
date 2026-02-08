@@ -69,7 +69,7 @@ export default function ContactPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 -mt-8 sm:-mt-12 lg:-mt-16">
-      <div className="flex flex-col gap-0 max-w-2xl">
+      <div className="flex flex-col gap-0 max-w-3xl">
         <div className="p-4 sm:p-8 pt-14 sm:pt-18 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           <div className="space-y-3 sm:space-y-4">
             {CONTACT_OPTIONS.map((option) => (

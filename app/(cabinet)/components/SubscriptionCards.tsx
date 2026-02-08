@@ -142,7 +142,7 @@ export function SubscriptionCards() {
     }
   };
   return (
-    <div>
+    <div className="max-w-3xl">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {TARIFFS.map((tariff) => (
           <div
@@ -174,9 +174,9 @@ export function SubscriptionCards() {
             </div>
             
             <div className="space-y-2 sm:space-y-3">
-              <div className="flex justify-between items-start gap-2">
-                <h3 className="text-lg sm:text-xl font-bold uppercase">{tariff.title}</h3>
-                <div className="text-right shrink-0">
+              <div className="flex flex-wrap items-start gap-2">
+                <h3 className="text-lg sm:text-xl font-bold uppercase whitespace-nowrap">{tariff.title}</h3>
+                <div className="text-right">
                   {tariff.originalPrice ? (
                     <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
                       <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
@@ -287,7 +287,7 @@ export function SubscriptionCards() {
           setPromoCode(null);
           setGiftTariff(null);
         }}
-        className="p-0 max-w-2xl w-full mx-2 sm:mx-4"
+        className="p-0 max-w-3xl w-full mx-2 sm:mx-4"
       >
         {promoCode && giftTariff && (
           <div className="p-4 sm:p-6 lg:p-8">
