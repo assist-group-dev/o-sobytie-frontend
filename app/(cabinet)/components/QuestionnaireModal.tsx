@@ -34,9 +34,6 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
   const dietaryOptions = ["Без ограничений", "Вегетарианство", "Веганство", "Халяль", "Без глютена", "Без лактозы", "Другое"];
   const physicalLimitationOptions = ["Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
   const fearOptions = ["Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
-  const fitnessLevelOptions = ["Низкий", "Средний", "Высокий"];
-  const activityPreferenceOptions = ["Спокойный формат", "Активный формат", "Смешанный"];
-  const activityTypeOptions = ["Мастер-классы", "Спорт", "Искусство", "Кулинария", "Природа", "Развлечения", "Образование"];
   const timePreferenceOptions = ["Утро", "День", "Вечер"];
   const dayPreferenceOptions = ["Будни", "Выходные", "Любые дни"];
 
