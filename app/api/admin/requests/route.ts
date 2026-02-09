@@ -7,12 +7,19 @@ export async function GET(request: NextRequest) {
 
   try {
     const cookies = request.cookies.toString();
+    const origin = request.headers.get("origin");
+
+    const headers: Record<string, string> = {
+      Cookie: cookies,
+    };
+
+    if (origin) {
+      headers["Origin"] = origin;
+    }
 
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Cookie: cookies,
-      },
+      headers,
       credentials: "include",
     });
 

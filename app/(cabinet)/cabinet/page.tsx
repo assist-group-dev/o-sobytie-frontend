@@ -19,8 +19,10 @@ export default function CabinetPage() {
   const { subscription, userData, fetchProfile } = useCabinetStore();
   const { logout } = useAppStore();
 
+  const { isFetchingProfile, fetchProfileError } = useCabinetStore();
+
   useEffect(() => {
-    if (!userData) {
+    if (!userData && !isFetchingProfile && !fetchProfileError) {
       fetchProfile().catch(() => {
         router.push("/");
       });

@@ -27,10 +27,10 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const { userData, fetchProfile } = useCabinetStore();
+  const { userData, fetchProfile, isFetchingProfile, fetchProfileError } = useCabinetStore();
 
   useEffect(() => {
-    if (!userData) {
+    if (!userData && !isFetchingProfile && !fetchProfileError) {
       fetchProfile().catch(console.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -12,6 +12,13 @@ export const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (typeof window !== "undefined") {
+      const origin = window.location.origin;
+      if (origin) {
+        config.headers = config.headers ?? {};
+        config.headers["Origin"] = origin;
+      }
+    }
     return config;
   },
   (error: AxiosError) => {

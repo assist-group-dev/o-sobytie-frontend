@@ -12,13 +12,20 @@ export async function PATCH(
   try {
     const body = await request.json();
     const cookies = request.cookies.toString();
+    const origin = request.headers.get("origin");
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Cookie: cookies,
+    };
+
+    if (origin) {
+      headers["Origin"] = origin;
+    }
 
     const response = await fetch(url, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookies,
-      },
+      headers,
       body: JSON.stringify(body),
       credentials: "include",
     });
@@ -61,12 +68,19 @@ export async function DELETE(
 
   try {
     const cookies = request.cookies.toString();
+    const origin = request.headers.get("origin");
+
+    const headers: Record<string, string> = {
+      Cookie: cookies,
+    };
+
+    if (origin) {
+      headers["Origin"] = origin;
+    }
 
     const response = await fetch(url, {
       method: "DELETE",
-      headers: {
-        Cookie: cookies,
-      },
+      headers,
       credentials: "include",
     });
 

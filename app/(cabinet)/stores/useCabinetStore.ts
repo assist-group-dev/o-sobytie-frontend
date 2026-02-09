@@ -34,21 +34,32 @@ interface CabinetState {
   setSubscription: (subscription: Subscription | null) => void;
   fetchProfile: () => Promise<void>;
   updateProfile: (data: { name?: string; phone?: string; avatar?: string }) => Promise<void>;
+  isFetchingProfile: boolean;
+  fetchProfileError: boolean;
 }
 
 export const useCabinetStore = create<CabinetState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       userData: null,
-      setUserData: (data) => set({ userData: data }),
+      setUserData: (data) => set({ userData: data, fetchProfileError: false }),
       subscription: null,
       setSubscription: (subscription) => set({ subscription }),
+      isFetchingProfile: false,
+      fetchProfileError: false,
       fetchProfile: async () => {
+        const state = get();
+        if (state.isFetchingProfile || state.fetchProfileError) {
+          return;
+        }
+
+        set({ isFetchingProfile: true, fetchProfileError: false });
         try {
           const response = await api.get<UserProfile>("/users/profile");
-          set({ userData: response.data });
+          set({ userData: response.data, isFetchingProfile: false, fetchProfileError: false });
         } catch (error) {
           console.error("Failed to fetch profile:", error);
+          set({ isFetchingProfile: false, fetchProfileError: true });
           throw error;
         }
       },
