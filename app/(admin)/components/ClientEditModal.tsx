@@ -52,6 +52,8 @@ interface ClientEditModalProps {
   onSave: (data: Partial<Client>) => void;
   onBan?: () => void;
   onDelete?: () => void;
+  onRevokeAdminRights?: () => void;
+  deleteButtonText?: string;
 }
 
 const dietaryOptions = ["Вегетарианство", "Веганство", "Халяль", "Кошер", "Без глютена", "Без лактозы"];
@@ -74,7 +76,7 @@ const deliveryTimeSlots = [
   { value: "18:00-21:00", label: "18:00 - 21:00" },
 ];
 
-export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete }: ClientEditModalProps) {
+export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete, onRevokeAdminRights, deleteButtonText = "Удалить" }: ClientEditModalProps) {
   const [activeTab, setActiveTab] = useState<"main" | "questionnaire" | "subscription">("main");
   const [formData, setFormData] = useState<Partial<Client>>({
     name: "",
@@ -818,6 +820,20 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
           )}
 
           <div className="flex gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            {onRevokeAdminRights && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (onRevokeAdminRights) {
+                    onRevokeAdminRights();
+                  }
+                }}
+                className="flex-1 border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              >
+                Отозвать админские права
+              </Button>
+            )}
             {onDelete && (
               <Button
                 type="button"
@@ -829,7 +845,7 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                 }}
                 className="flex-1 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                Удалить
+                {deleteButtonText}
               </Button>
             )}
             {onBan && (
