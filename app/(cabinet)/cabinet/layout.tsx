@@ -8,6 +8,7 @@ import { cn } from "@/utils/cn";
 import { Logo } from "@/ui/components/Logo";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
+import { ToastContainer } from "@/app/(cabinet)/components/ToastContainer";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 
 interface CabinetLayoutProps {
@@ -184,6 +185,8 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      <ToastContainer />
     </div>
   );
 }

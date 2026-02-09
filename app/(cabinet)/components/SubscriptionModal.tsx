@@ -7,6 +7,7 @@ import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { SubscriptionPurchaseModal, SubscriptionFormData } from "./SubscriptionPurchaseModal";
 
 const maskEmail = (email: string): string => {
@@ -97,6 +98,7 @@ interface SubscriptionModalProps {
 
 export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, onOpenQuestionnaire }: SubscriptionModalProps) {
   const { userData } = useCabinetStore();
+  const { addToast } = useToastStore();
   const [selectedTariff, setSelectedTariff] = useState<Tariff | null>(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [giftTariff, setGiftTariff] = useState<Tariff | null>(null);
@@ -439,6 +441,13 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
               apartment: data.apartment,
               phone: data.phone,
             });
+            
+            addToast({
+              type: "success",
+              message: "Подписка успешно оформлена! Мы свяжемся с вами для подтверждения заказа.",
+              duration: 5000,
+            });
+            
             setIsPurchaseModalOpen(false);
             setPurchaseTariff(null);
             handleClose();

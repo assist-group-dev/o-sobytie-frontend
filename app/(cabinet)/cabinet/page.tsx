@@ -9,6 +9,7 @@ import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 import { SubscriptionModal } from "@/app/(cabinet)/components/SubscriptionModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
@@ -60,9 +61,16 @@ export default function CabinetPage() {
     }
   };
 
+  const { addToast } = useToastStore();
+
   const handleQuestionnaireComplete = () => {
     setIsQuestionnaireCompleted(true);
     setIsQuestionnaireOpen(false);
+    addToast({
+      type: "success",
+      message: "Анкетирование успешно завершено! Теперь вы можете оформить подписку.",
+      duration: 4000,
+    });
     setIsSubscriptionModalOpen(true);
   };
 

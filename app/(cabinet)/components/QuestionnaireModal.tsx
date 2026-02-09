@@ -32,8 +32,8 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
   });
 
   const dietaryOptions = ["Без ограничений", "Вегетарианство", "Веганство", "Халяль", "Без глютена", "Без лактозы", "Другое"];
-  const physicalLimitationOptions = ["Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
-  const fearOptions = ["Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
+  const physicalLimitationOptions = ["Без ограничений", "Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
+  const fearOptions = ["Без ограничений", "Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
   const timePreferenceOptions = ["Утро", "День", "Вечер"];
   const dayPreferenceOptions = ["Будни", "Выходные", "Любые дни"];
 
@@ -127,16 +127,24 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
       }
       
       if (key === "physicalLimitations") {
-        const updated = current.includes(value)
-          ? current.filter((item) => item !== value)
-          : [...current, value];
+        if (value === "Без ограничений") {
+          return { ...prev, [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"], physicalLimitationsOther: "" };
+        }
+        const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+        const updated = withoutNoRestrictions.includes(value)
+          ? withoutNoRestrictions.filter((item) => item !== value)
+          : [...withoutNoRestrictions, value];
         return { ...prev, [key]: updated, physicalLimitationsOther: updated.includes("Другое") ? prev.physicalLimitationsOther : "" };
       }
       
       if (key === "fears") {
-        const updated = current.includes(value)
-          ? current.filter((item) => item !== value)
-          : [...current, value];
+        if (value === "Без ограничений") {
+          return { ...prev, [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"], fearsOther: "" };
+        }
+        const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+        const updated = withoutNoRestrictions.includes(value)
+          ? withoutNoRestrictions.filter((item) => item !== value)
+          : [...withoutNoRestrictions, value];
         return { ...prev, [key]: updated, fearsOther: updated.includes("Другое") ? prev.fearsOther : "" };
       }
       
@@ -182,12 +190,29 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
     });
   };
 
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 0:
+        return formData.dietaryRestrictions.length > 0;
+      case 1:
+        return formData.physicalLimitations.length > 0;
+      case 2:
+        return formData.fears.length > 0;
+      case 3:
+        return formData.timePreference.length > 0 && formData.dayPreference.length > 0;
+      case 4:
+        return true;
+      default:
+        return false;
+    }
+  };
+
   const currentStepData = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4" closeOnBackdropClick={false}>
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mb-4 sm:mb-6">
           <div className="mb-3 sm:mb-4">
@@ -350,6 +375,7 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
             <Button
               size="lg"
               onClick={handleNext}
+              disabled={!isStepValid()}
               className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
               Далее
