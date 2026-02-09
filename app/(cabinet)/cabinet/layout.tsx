@@ -8,6 +8,7 @@ import { cn } from "@/utils/cn";
 import { Logo } from "@/ui/components/Logo";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
+import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 
 interface CabinetLayoutProps {
   children: React.ReactNode;
@@ -26,11 +27,14 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
+  const { userData, fetchProfile } = useCabinetStore();
 
-  const user = {
-    name: "Иван Иванов",
-    email: "ivan@example.com",
-  };
+  useEffect(() => {
+    if (!userData) {
+      fetchProfile().catch(console.error);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (pathname !== prevPathname) {
@@ -101,8 +105,8 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   <User className="h-6 w-6 text-[var(--color-golden)]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{user.name}</p>
-                  <p className="text-xs text-[var(--foreground)]/70 truncate">{user.email}</p>
+                  <p className="text-sm font-medium truncate">{userData?.name ?? "Загрузка..."}</p>
+                  <p className="text-xs text-[var(--foreground)]/70 truncate">{userData?.email ?? "Загрузка..."}</p>
                 </div>
               </div>
             </div>

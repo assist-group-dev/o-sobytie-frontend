@@ -1,25 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
+import { Modal } from "@/ui/components/Modal";
 import { User, Package, LogOut, Mail, FileText, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { useAppStore } from "@/stores/useAppStore";
 
 export default function CabinetPage() {
+  const router = useRouter();
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isQuestionnaireCompleted, setIsQuestionnaireCompleted] = useState(false);
-  const { subscription } = useCabinetStore();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { subscription, userData, fetchProfile } = useCabinetStore();
+  const { logout } = useAppStore();
 
-  const user = {
-    name: "Иван Иванов",
-    email: "ivan@example.com",
+  useEffect(() => {
+    if (!userData) {
+      fetchProfile().catch(() => {
+        router.push("/");
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLogoutClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsLogoutModalOpen(true);
   };
 
-  const handleLogout = () => {
-    console.log("Logout");
+  const handleLogoutConfirm = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      logout();
+      useCabinetStore.getState().setUserData(null);
+      setIsLogoutModalOpen(false);
+      router.push("/");
+    }
   };
 
   const handleQuestionnaireComplete = () => {
@@ -36,17 +64,19 @@ export default function CabinetPage() {
                 <User className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[var(--color-golden)]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">{user.name}</h2>
+                <h2 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">
+                  {userData?.name ?? "Загрузка..."}
+                </h2>
                 <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-[var(--foreground)]/70">
                   <Mail className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{user.email}</span>
+                  <span className="truncate">{userData?.email ?? "Загрузка..."}</span>
                 </div>
               </div>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className={cn(
                 "uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 shrink-0",
                 "border-[var(--color-golden)] text-[var(--color-golden)]",
@@ -158,6 +188,36 @@ export default function CabinetPage() {
         onClose={() => setIsQuestionnaireOpen(false)}
         onComplete={handleQuestionnaireComplete}
       />
+
+      <Modal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        className="max-w-md"
+      >
+        <div className="p-8 text-center">
+          <h2 className="text-xl font-bold uppercase mb-4">Подтверждение выхода</h2>
+          <p className="text-sm text-[var(--foreground)]/70 mb-6">
+            Вы уверены, что хотите выйти из аккаунта?
+          </p>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 uppercase tracking-wider"
+              onClick={() => setIsLogoutModalOpen(false)}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 uppercase tracking-wider"
+              onClick={handleLogoutConfirm}
+            >
+              Выйти
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
