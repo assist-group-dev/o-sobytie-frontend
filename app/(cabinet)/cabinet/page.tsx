@@ -69,8 +69,8 @@ export default function CabinetPage() {
         <div className="p-4 sm:p-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-1 min-w-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
-                <User className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[var(--color-golden)]" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+                <User className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">
@@ -90,7 +90,7 @@ export default function CabinetPage() {
                 "uppercase tracking-wider flex items-center justify-center gap-1.5 sm:gap-2 shrink-0",
                 "border-[var(--color-golden)] text-[var(--color-golden)]",
                 "hover:bg-[var(--color-golden)] hover:text-[var(--background)]",
-                "px-2 sm:px-3 py-1.5 text-xs sm:text-sm"
+                "w-full sm:w-auto"
               )}
             >
               <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -100,14 +100,14 @@ export default function CabinetPage() {
         </div>
 
         {subscription ? (
-          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
-            <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+          <div className="p-4 sm:p-6 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
+            <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
                 <Package className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-lg sm:text-xl font-bold mb-1 truncate">{subscription.title}</h3>
-                <p className="text-xs sm:text-sm text-[var(--foreground)]/70">{subscription.duration}</p>
+                <h3 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">{subscription.title}</h3>
+                <p className="text-xs text-[var(--foreground)]/70">{subscription.duration}</p>
               </div>
             </div>
 
@@ -123,26 +123,27 @@ export default function CabinetPage() {
             </div>
           </div>
         ) : (
-          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
-              <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+          <div className="p-4 sm:p-6 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
+            <div className="flex items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-1 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
                   <Package className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg sm:text-xl font-bold mb-1">Подписка отсутствует</h3>
-                  <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1">Подписка отсутствует</h3>
+                  <p className="text-xs text-[var(--foreground)]/70">
                     Оформите подписку в разделе "Подписка"
                   </p>
                 </div>
               </div>
-              <Link href="/cabinet/subscription" className="w-full sm:w-auto">
+              <Link href="/cabinet/subscription" className="shrink-0">
                 <Button
                   size="sm"
                   className={cn(
-                    "uppercase tracking-wider shrink-0 w-full sm:w-auto",
+                    "uppercase tracking-wider shrink-0",
                     "bg-[var(--color-golden)] text-[var(--background)]",
-                    "hover:opacity-90"
+                    "hover:opacity-90",
+                    "w-full sm:w-auto"
                   )}
                 >
                   Оформить

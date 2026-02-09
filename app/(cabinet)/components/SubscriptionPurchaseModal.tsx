@@ -12,12 +12,6 @@ interface Tariff {
   price: string;
 }
 
-interface PremiumLevel {
-  id: string;
-  name: string;
-  description: string;
-}
-
 interface SubscriptionPurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,24 +30,6 @@ export interface SubscriptionFormData {
   deliveryTime: string;
 }
 
-const PREMIUM_LEVELS: PremiumLevel[] = [
-  {
-    id: "elegant",
-    name: "Элегантный",
-    description: "Классический подход к организации впечатлений",
-  },
-  {
-    id: "cozy",
-    name: "Уютный",
-    description: "Теплая атмосфера и внимательный подход к деталям",
-  },
-  {
-    id: "special",
-    name: "Особенный",
-    description: "Уникальные решения и эксклюзивные возможности",
-  },
-];
-
 const DELIVERY_TIME_SLOTS = [
   { id: "morning", label: "09:00 - 12:00", value: "09:00-12:00" },
   { id: "afternoon", label: "12:00 - 15:00", value: "12:00-15:00" },
@@ -69,7 +45,7 @@ export function SubscriptionPurchaseModal({
 }: SubscriptionPurchaseModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<SubscriptionFormData>({
-    premiumLevel: "",
+    premiumLevel: "elegant",
     city: "",
     street: "",
     house: "",
@@ -81,10 +57,6 @@ export function SubscriptionPurchaseModal({
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const steps = [
-    {
-      title: "Выберите уровень премиальности",
-      description: "Выберите подходящий вариант для вашей подписки",
-    },
     {
       title: "Адрес доставки",
       description: "Укажите адрес, куда будет доставлена коробка",
@@ -116,7 +88,7 @@ export function SubscriptionPurchaseModal({
     onClose();
     setCurrentStep(0);
     setFormData({
-      premiumLevel: "",
+      premiumLevel: "elegant",
       city: "",
       street: "",
       house: "",
@@ -130,16 +102,14 @@ export function SubscriptionPurchaseModal({
   const isStepValid = () => {
     switch (currentStep) {
       case 0:
-        return formData.premiumLevel !== "";
-      case 1:
         return (
           formData.city.trim() !== "" &&
           formData.street.trim() !== "" &&
           formData.house.trim() !== ""
         );
-      case 2:
+      case 1:
         return formData.phone.trim() !== "";
-      case 3:
+      case 2:
         return formData.deliveryDate !== "" && formData.deliveryTime !== "";
       default:
         return false;
@@ -335,27 +305,6 @@ export function SubscriptionPurchaseModal({
           </p>
 
           {currentStep === 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {PREMIUM_LEVELS.map((level) => (
-                <button
-                  key={level.id}
-                  onClick={() => setFormData({ ...formData, premiumLevel: level.id })}
-                  className={cn(
-                    "p-4 sm:p-6 text-left border-2 transition-all duration-200",
-                    "hover:border-[var(--color-golden)] hover:bg-[var(--color-cream)]/10",
-                    formData.premiumLevel === level.id
-                      ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                      : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50"
-                  )}
-                >
-                  <h4 className="text-base sm:text-lg font-bold mb-1 sm:mb-2">{level.name}</h4>
-                  <p className="text-xs sm:text-sm text-[var(--foreground)]/70">{level.description}</p>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {currentStep === 1 && (
             <div className="space-y-4">
               <div>
                 <label htmlFor="city" className="block text-xs sm:text-sm font-medium mb-2">
@@ -441,7 +390,7 @@ export function SubscriptionPurchaseModal({
             </div>
           )}
 
-          {currentStep === 2 && (
+          {currentStep === 1 && (
             <div>
               <label htmlFor="phone" className="block text-xs sm:text-sm font-medium mb-2">
                 Телефон
@@ -462,7 +411,7 @@ export function SubscriptionPurchaseModal({
             </div>
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <div className="space-y-4 sm:space-y-6">
               <div className="relative">
                 <label className="block text-xs sm:text-sm font-medium mb-2">
