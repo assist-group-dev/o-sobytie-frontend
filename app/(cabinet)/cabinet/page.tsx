@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { User, Package, LogOut, Mail, FileText, Check } from "lucide-react";
+import { User, Package, LogOut, Mail, FileText } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
@@ -153,28 +153,8 @@ export default function CabinetPage() {
           </div>
         )}
 
-        <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
-          {isQuestionnaireCompleted ? (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-6 bg-[var(--color-cream)]/60 dark:bg-[var(--color-cream)]/10">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-golden)]/20 flex items-center justify-center shrink-0">
-                <Check className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-bold mb-1">Анкетирование пройдено</h3>
-                <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
-                  Спасибо! Ваши ответы помогут нам организовать идеальное свидание
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsQuestionnaireOpen(true)}
-                className="uppercase tracking-wider w-full sm:w-auto"
-              >
-                Изменить
-              </Button>
-            </div>
-          ) : (
+        {!isQuestionnaireCompleted && (
+          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
             <button
               onClick={() => setIsQuestionnaireOpen(true)}
               className="w-full p-4 sm:p-6 bg-[var(--color-golden)] hover:opacity-90 transition-opacity text-left"
@@ -189,8 +169,8 @@ export default function CabinetPage() {
                 </div>
               </div>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <QuestionnaireModal
