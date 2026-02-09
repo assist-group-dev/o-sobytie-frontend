@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Users, Building2, Calendar, Tag, MessageSquare, Ticket, Settings, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
@@ -27,8 +27,7 @@ const navigation = [
 
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, isAuthenticated } = useAppStore();
+  const { user } = useAppStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);

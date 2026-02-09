@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8276";
-
 const getApiBaseUrl = (): string => {
   if (process.env.NEXT_PUBLIC_BACKEND_URL) {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
