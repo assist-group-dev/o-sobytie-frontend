@@ -20,10 +20,11 @@ interface Client {
 interface Counterparty {
   id: string;
   name: string;
-  address: string;
-  phone: string;
-  contactPerson: string;
-  description: string;
+  address?: string;
+  phone?: string;
+  contactPerson?: string;
+  description?: string;
+  event?: string;
 }
 
 interface ScheduleEvent {

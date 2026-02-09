@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { User, LogOut } from "lucide-react";
 import { Logo } from "@/ui/components/Logo";
 import { Button } from "@/ui/components/Button";
@@ -20,12 +19,11 @@ const NAV_LINKS = [
 ];
 
 export function Header() {
-  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { user, isAuthenticated, setAuth, logout } = useAppStore();
-  const { userData, fetchProfile } = useCabinetStore();
+  const { fetchProfile } = useCabinetStore();
 
   useEffect(() => {
     const handleScroll = () => {

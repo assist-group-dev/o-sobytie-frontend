@@ -38,7 +38,7 @@ interface CabinetState {
 
 export const useCabinetStore = create<CabinetState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       userData: null,
       setUserData: (data) => set({ userData: data }),
       subscription: null,

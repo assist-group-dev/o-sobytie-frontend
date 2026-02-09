@@ -35,9 +35,10 @@ interface Client {
   id: string;
   name: string;
   email: string;
-  eventDate: string;
-  questionnaireCompleted: boolean;
-  subscriptionActive: boolean;
+  eventDate?: string;
+  questionnaireCompleted?: boolean;
+  subscriptionActive?: boolean;
+  banned?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionData;
 }
