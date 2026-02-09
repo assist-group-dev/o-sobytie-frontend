@@ -34,6 +34,11 @@ export async function POST(
       headers["Content-Type"] = contentType;
     }
 
+    const origin = request.headers.get("origin");
+    if (origin) {
+      headers["Origin"] = origin;
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers,
