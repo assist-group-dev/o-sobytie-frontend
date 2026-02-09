@@ -61,9 +61,9 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-peach)]/10">
+    <div className="min-h-screen bg-[var(--color-peach)]/10 dark:bg-[var(--color-peach)]/10">
       <LoadingOverlay isLoading={isLoading} />
-      <header className="sticky top-0 z-50 bg-[var(--background)]/95 backdrop-blur-md border-b border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 shadow-sm">
+      <header className="sticky top-0 z-50 bg-[var(--background)]/95 backdrop-blur-md border-b border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between h-10">
             <Link href="/" className="hover:opacity-80 transition-opacity">
@@ -73,7 +73,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
               <ThemeToggle />
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
+                className="lg:hidden p-2 hover:bg-[var(--color-cream)]/60 dark:hover:bg-[var(--color-cream)]/10 transition-colors"
                 aria-label="Меню"
               >
                 {isMobileMenuOpen ? (
@@ -87,21 +87,22 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-32 xl:pt-48 pb-4 sm:pb-6">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
-          <aside
-            className={cn(
-              "w-full lg:w-80 shrink-0 rounded-xl shadow-lg border border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 bg-[var(--background)]/95 backdrop-blur-sm overflow-hidden flex flex-col",
-              "lg:sticky lg:top-24",
-              "max-lg:fixed max-lg:top-16 max-lg:inset-x-4 max-lg:w-[calc(100%-2rem)] max-lg:z-40",
-              "max-lg:transition-all max-lg:duration-300 max-lg:ease-in-out",
-              !isMobileMenuOpen && "max-lg:translate-y-[-100%] max-lg:opacity-0 max-lg:pointer-events-none",
-              isMobileMenuOpen && "max-lg:translate-y-0 max-lg:opacity-100 max-lg:pointer-events-auto"
-            )}
-          >
-            <div className="p-3 border-b border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-24 xl:pt-48 min-[1536px]:pt-64 min-[1920px]:pt-48 pb-4 sm:pb-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
+            <aside
+              className={cn(
+                "w-full lg:w-80 shrink-0 rounded-xl shadow-lg border border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20 bg-[var(--color-cream)]/20 dark:bg-[var(--background)]/95 backdrop-blur-sm overflow-hidden flex flex-col",
+                "lg:sticky lg:top-24",
+                "max-lg:fixed max-lg:top-16 max-lg:inset-x-4 max-lg:w-[calc(100%-2rem)] max-lg:z-40",
+                "max-lg:transition-all max-lg:duration-300 max-lg:ease-in-out",
+                !isMobileMenuOpen && "max-lg:translate-y-[-100%] max-lg:opacity-0 max-lg:pointer-events-none",
+                isMobileMenuOpen && "max-lg:translate-y-0 max-lg:opacity-100 max-lg:pointer-events-auto"
+              )}
+            >
+            <div className="p-3 border-b border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
                   <User className="h-6 w-6 text-[var(--color-golden)]" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -126,10 +127,10 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 text-sm transition-all duration-200",
-                      "hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20",
+                      "hover:bg-[var(--color-cream)]/60 dark:hover:bg-[var(--color-cream)]/20",
                       "hover:text-[var(--color-golden)]",
                       isActive &&
-                        "bg-[var(--color-cream)]/40 dark:bg-[var(--color-cream)]/30 text-[var(--color-golden)] font-medium"
+                        "bg-[var(--color-cream)]/80 dark:bg-[var(--color-cream)]/30 text-[var(--color-golden)] font-medium"
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -139,7 +140,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
               })}
             </div>
 
-            <div className="p-3 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            <div className="p-3 border-t border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20">
               <form onSubmit={handlePromoSubmit} className="space-y-2">
                 <p className="text-xs font-medium text-[var(--foreground)]/70 mb-2 flex items-center gap-1">
                   <Ticket className="h-3 w-3" />
@@ -152,7 +153,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                     onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Введите код"
                     className={cn(
-                      "flex-1 px-3 py-1.5 text-sm border border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20",
+                      "flex-1 px-3 py-1.5 text-sm border border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20",
                       "bg-[var(--background)] text-[var(--foreground)]",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                     )}
@@ -172,8 +173,9 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
           </aside>
 
           <main className="flex-1 min-w-0">
-            <div className="max-w-6xl mx-auto">{children}</div>
+            {children}
           </main>
+        </div>
         </div>
       </div>
 
