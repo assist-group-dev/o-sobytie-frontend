@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { User, LogOut } from "lucide-react";
+import { User } from "lucide-react";
 import { Logo } from "@/ui/components/Logo";
 import { Button } from "@/ui/components/Button";
-import { Modal } from "@/ui/components/Modal";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { AuthModal } from "./AuthModal";
 import { useState, useEffect } from "react";
@@ -21,8 +20,7 @@ const NAV_LINKS = [
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const { user, isAuthenticated, setAuth, logout } = useAppStore();
+  const { user, isAuthenticated, setAuth } = useAppStore();
   const { fetchProfile } = useCabinetStore();
 
   useEffect(() => {
@@ -61,27 +59,6 @@ export function Header() {
       checkAuth();
     }
   }, [isAuthenticated, setAuth, fetchProfile]);
-
-  const handleLogoutClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsLogoutModalOpen(true);
-  };
-
-  const handleLogoutConfirm = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      logout();
-      useCabinetStore.getState().setUserData(null);
-      setIsLogoutModalOpen(false);
-    }
-  };
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -138,28 +115,17 @@ export function Header() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {isAuthenticated && user ? (
-            <div className="flex items-center gap-3">
-              <Link
-                href="/cabinet"
-                className="hidden sm:flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center">
-                  <User className="h-4 w-4 text-[var(--color-golden)]" />
-                </div>
-                <span className="text-sm font-medium hover:text-[var(--color-golden)] transition-colors">
-                  {user.name}
-                </span>
-              </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogoutClick}
-                className="flex items-center gap-2 uppercase tracking-wide text-xs font-medium border-[var(--color-golden)] text-[var(--color-golden)] hover:bg-[var(--color-golden)] hover:text-[var(--background)]"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Выйти</span>
-              </Button>
-            </div>
+            <Link
+              href="/cabinet"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center">
+                <User className="h-4 w-4 text-[var(--color-golden)]" />
+              </div>
+              <span className="hidden sm:inline text-sm font-medium hover:text-[var(--color-golden)] transition-colors">
+                {user.name}
+              </span>
+            </Link>
           ) : (
             <Button
               variant="text"
@@ -177,35 +143,6 @@ export function Header() {
       </div>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-
-      <Modal
-        isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)}
-        className="max-w-md"
-      >
-        <div className="p-8">
-          <h2 className="text-xl font-bold uppercase mb-2">Выход из аккаунта</h2>
-          <p className="text-sm text-[var(--foreground)]/60 mb-6">
-            Вы уверены, что хотите выйти из аккаунта?
-          </p>
-
-          <div className="flex flex-col gap-3">
-            <Button
-              onClick={handleLogoutConfirm}
-              className="w-full uppercase tracking-wider"
-            >
-              Выйти
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsLogoutModalOpen(false)}
-              className="w-full uppercase tracking-wider"
-            >
-              Отмена
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </header>
   );
 }
