@@ -10,7 +10,6 @@ import { useState, useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { useAppStore } from "@/stores/useAppStore";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
-import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 const NAV_LINKS = [
   { href: "#tariffs", label: "Тарифы" },
@@ -33,25 +32,28 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Проверяем аутентификацию при загрузке компонента
   useEffect(() => {
     const checkAuth = async () => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (!token) {
+        setAuth(null);
+        return;
+      }
+
+      if (user?.role) {
+        return;
+      }
+
       try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/users/profile`);
-        if (response.ok) {
-          const data = await response.json();
+        await fetchProfile();
+        const profileData = useCabinetStore.getState().userData;
+        if (profileData) {
           setAuth({
-            id: data._id || data.id,
-            email: data.email,
-            name: data.name,
-            role: data.role,
+            id: profileData.id,
+            email: profileData.email,
+            name: profileData.name,
+            role: profileData.role,
           });
-          await fetchProfile();
-        } else {
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("access_token");
-          }
-          setAuth(null);
         }
       } catch (error) {
         if (typeof window !== "undefined") {
@@ -64,7 +66,7 @@ export function Header() {
     if (!isAuthenticated || !user) {
       checkAuth();
     }
-  }, [isAuthenticated, user, setAuth, fetchProfile]);
+  }, [isAuthenticated, user, setAuth]);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();

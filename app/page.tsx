@@ -37,8 +37,8 @@ export default function LandingPage() {
       setTimeout(() => {
         setIsLoaded(true);
         resetScroll();
-      }, 300);
-    }, 800);
+      }, 100);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, []);
