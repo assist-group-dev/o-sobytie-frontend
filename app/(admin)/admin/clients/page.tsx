@@ -12,6 +12,7 @@ import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface QuestionnaireData {
   allergies: string;
@@ -70,9 +71,7 @@ export default function ClientsPage() {
     const fetchClients = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/admin/clients", {
-          credentials: "include",
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch clients");
@@ -160,12 +159,8 @@ export default function ClientsPage() {
     if (selectedClient) {
       try {
         const newBannedStatus = !selectedClient.banned;
-        const response = await fetch(`/api/admin/clients/${selectedClient.id}/ban`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients/${selectedClient.id}/ban`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
           body: JSON.stringify({ banned: newBannedStatus }),
         });
 

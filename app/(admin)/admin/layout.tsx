@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Users, Building2, Calendar, Tag, MessageSquare, Ticket, Settings, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
 import { ToastContainer } from "@/app/(admin)/components/ToastContainer";
+import { useAppStore } from "@/stores/useAppStore";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -25,9 +27,107 @@ const navigation = [
 
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAppStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
+  
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const initialCheck = token && user?.role === "admin";
+  
+  const [isCheckingAccess, setIsCheckingAccess] = useState(!initialCheck);
+  const [hasAccess, setHasAccess] = useState(initialCheck ?? false);
+  
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+    
+    if (user && user.role !== "admin") {
+      window.location.href = "/";
+      return;
+    }
+  }, [token, user]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAdminAccess = async () => {
+      setIsCheckingAccess(true);
+      setHasAccess(false);
+      
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      
+      if (!token) {
+        console.log("[AdminLayout] No token found, redirecting to /");
+        if (isMounted) {
+          window.location.href = "/";
+        }
+        return;
+      }
+
+      if (user?.role === "admin") {
+        console.log("[AdminLayout] User is admin, access granted");
+        if (isMounted) {
+          setHasAccess(true);
+          setIsCheckingAccess(false);
+        }
+        return;
+      }
+
+      try {
+        console.log("[AdminLayout] Checking admin access via API");
+        const response = await fetchWithAuth(`${API_BASE_URL}/users/profile`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("[AdminLayout] Profile response:", { role: data.role });
+          
+          if (data.role !== "admin") {
+            console.log("[AdminLayout] User is not admin, redirecting to /");
+            if (isMounted) {
+              window.location.href = "/";
+            }
+            return;
+          }
+          
+          if (isMounted) {
+            useAppStore.getState().setAuth({
+              id: data.id || data._id,
+              email: data.email,
+              name: data.name,
+              role: data.role,
+            });
+            setHasAccess(true);
+            setIsCheckingAccess(false);
+            console.log("[AdminLayout] Admin access confirmed");
+          }
+        } else {
+          const status = response.status;
+          console.log("[AdminLayout] Profile check failed:", { status, statusText: response.statusText });
+          
+          if (isMounted) {
+            window.location.href = "/";
+          }
+        }
+      } catch (error) {
+        console.error("[AdminLayout] Error checking access:", error);
+        if (isMounted) {
+          window.location.href = "/";
+        }
+      }
+    };
+
+    checkAdminAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (pathname !== prevPathname) {
@@ -47,6 +147,17 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       return () => clearTimeout(timer);
     }
   }, [pathname, prevPathname]);
+
+  if (isCheckingAccess || !hasAccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-golden)] mx-auto mb-4"></div>
+          <p className="text-[var(--foreground)]/70">Проверка доступа...</p>
+        </div>
+      </div>
+    );
+  }
 
   const sidebarWidth = isCollapsed ? "w-16" : "w-64";
 

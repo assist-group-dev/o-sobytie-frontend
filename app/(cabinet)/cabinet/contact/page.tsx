@@ -5,6 +5,7 @@ import { Mail, MessageCircle, Copy, Check } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 const CONTACT_OPTIONS = [
   {
@@ -53,12 +54,8 @@ export default function ContactPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/user-requests", {
+      const response = await fetchWithAuth(`${API_BASE_URL}/user-requests`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({
           contactMethod,
           contact: formData.contact,

@@ -12,6 +12,7 @@ import { CounterpartyCreateModal } from "@/app/(admin)/components/CounterpartyCr
 import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface Counterparty {
   id: string;
@@ -41,9 +42,7 @@ export default function CounterpartiesPage() {
     const fetchCounterparties = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/admin/counterparties", {
-          credentials: "include",
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch counterparties");
@@ -116,12 +115,8 @@ export default function CounterpartiesPage() {
 
   const handleCreate = async (data: Omit<Counterparty, "id">) => {
     try {
-      const response = await fetch("/api/admin/counterparties", {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify(data),
       });
 
@@ -154,9 +149,8 @@ export default function CounterpartiesPage() {
   const handleDeleteConfirm = async () => {
     if (selectedCounterparty) {
       try {
-        const response = await fetch(`/api/admin/counterparties/${selectedCounterparty.id}`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties/${selectedCounterparty.id}`, {
           method: "DELETE",
-          credentials: "include",
         });
 
         if (!response.ok) {

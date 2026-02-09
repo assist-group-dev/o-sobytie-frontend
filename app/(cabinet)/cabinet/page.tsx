@@ -10,6 +10,7 @@ import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { useAppStore } from "@/stores/useAppStore";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 export default function CabinetPage() {
   const router = useRouter();
@@ -23,8 +24,12 @@ export default function CabinetPage() {
 
   useEffect(() => {
     if (!userData && !isFetchingProfile && !fetchProfileError) {
-      fetchProfile().catch(() => {
-        router.push("/");
+      fetchProfile().catch((error) => {
+        console.error("Failed to fetch profile:", error);
+        const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+        if (!token) {
+          router.push("/");
+        }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,13 +43,15 @@ export default function CabinetPage() {
 
   const handleLogoutConfirm = async () => {
     try {
-      await fetch("/api/auth/logout", {
+      await fetchWithAuth(`${API_BASE_URL}/auth/logout`, {
         method: "POST",
-        credentials: "include",
       });
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+      }
       logout();
       useCabinetStore.getState().setUserData(null);
       setIsLogoutModalOpen(false);

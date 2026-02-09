@@ -7,6 +7,7 @@ import { Button } from "@/ui/components/Button";
 import { cn } from "@/utils/cn";
 import { useAppStore } from "@/stores/useAppStore";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { API_BASE_URL } from "@/utils/backend";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -58,9 +59,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           name: registerData.name,
           email: registerData.email,
@@ -93,7 +95,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -102,8 +104,24 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
       const data = await response.json();
 
+      console.log("=== LOGIN RESPONSE ===");
+      console.log("Full response data:", data);
+      console.log("User data:", data.user);
+      console.log("User role:", data.user?.role);
+      console.log("Access token present:", !!data.accessToken);
+      console.log("Response headers:", {
+        setCookie: response.headers.get("set-cookie"),
+        cookies: document.cookie,
+      });
+      console.log("=====================");
+
       if (!response.ok) {
         throw new Error(data.message ?? "Ошибка входа");
+      }
+
+      if (data.accessToken) {
+        localStorage.setItem("access_token", data.accessToken);
+        console.log("Access token saved to localStorage");
       }
 
       setAuth({
@@ -113,6 +131,17 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         role: data.user.role,
       });
 
+      console.log("Auth state set with role:", data.user.role);
+
+      useCabinetStore.getState().setUserData({
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+        role: data.user.role,
+        emailVerified: true,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await fetchProfile();
       onClose();
       router.push("/cabinet");
@@ -129,7 +158,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: forgotEmail }),
@@ -270,7 +299,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     try {
-      const response = await fetch("/api/auth/verify-reset-code", {
+      const response = await fetch(`${API_BASE_URL}/auth/verify-reset-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: codeString }),
@@ -309,7 +338,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -368,7 +397,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
 
     try {
-      const response = await fetch("/api/auth/verify-email", {
+      const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -392,7 +421,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
       // После успешного подтверждения автоматически логиним пользователя
       try {
-        const loginResponse = await fetch("/api/auth/login", {
+        const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -404,7 +433,18 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         const loginData = await loginResponse.json();
 
+        console.log("=== AUTO-LOGIN RESPONSE ===");
+        console.log("Full response data:", loginData);
+        console.log("User data:", loginData.user);
+        console.log("Access token present:", !!loginData.accessToken);
+        console.log("=====================");
+
         if (loginResponse.ok && loginData.user) {
+          if (loginData.accessToken) {
+            localStorage.setItem("access_token", loginData.accessToken);
+            console.log("Access token saved to localStorage");
+          }
+
           setAuth({
             id: loginData.user._id || loginData.user.id,
             email: loginData.user.email,
@@ -412,11 +452,23 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             role: loginData.user.role,
           });
 
+          useCabinetStore.getState().setUserData({
+            id: loginData.user._id || loginData.user.id,
+            email: loginData.user.email,
+            name: loginData.user.name,
+            role: loginData.user.role,
+            emailVerified: true,
+          });
+
+          await new Promise((resolve) => setTimeout(resolve, 100));
           await fetchProfile();
+        } else {
+          throw new Error(loginData.message ?? "Ошибка автологина");
         }
       } catch (loginErr) {
         console.error("Auto-login failed:", loginErr);
-        // Продолжаем даже если автологин не удался - пользователь может войти вручную
+        setError(loginErr instanceof Error ? loginErr.message : "Ошибка автологина");
+        throw loginErr;
       }
 
       // Закрываем все модальные окна

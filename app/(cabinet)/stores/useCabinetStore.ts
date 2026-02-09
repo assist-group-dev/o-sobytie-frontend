@@ -49,14 +49,28 @@ export const useCabinetStore = create<CabinetState>()(
       fetchProfileError: false,
       fetchProfile: async () => {
         const state = get();
-        if (state.isFetchingProfile || state.fetchProfileError) {
+        if (state.isFetchingProfile) {
           return;
+        }
+
+        if (state.fetchProfileError) {
+          set({ fetchProfileError: false });
         }
 
         set({ isFetchingProfile: true, fetchProfileError: false });
         try {
           const response = await api.get<UserProfile>("/users/profile");
-          set({ userData: response.data, isFetchingProfile: false, fetchProfileError: false });
+          const userData: UserProfile = {
+            id: response.data.id ?? (response.data as any)._id ?? "",
+            email: response.data.email ?? "",
+            name: response.data.name ?? "",
+            role: response.data.role ?? "",
+            emailVerified: response.data.emailVerified ?? false,
+            phone: response.data.phone,
+            avatar: response.data.avatar,
+            lastLogin: response.data.lastLogin,
+          };
+          set({ userData, isFetchingProfile: false, fetchProfileError: false });
         } catch (error) {
           console.error("Failed to fetch profile:", error);
           set({ isFetchingProfile: false, fetchProfileError: true });
@@ -75,6 +89,10 @@ export const useCabinetStore = create<CabinetState>()(
     }),
     {
       name: "cabinet-storage",
+      partialize: (state) => ({
+        userData: state.userData,
+        subscription: state.subscription,
+      }),
     }
   )
 );

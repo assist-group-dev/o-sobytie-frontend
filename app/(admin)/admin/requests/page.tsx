@@ -11,6 +11,7 @@ import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 type RequestStatus = "Новый" | "Просмотрен" | "Отвечен" | "В работе" | "Решен";
 
@@ -66,9 +67,7 @@ export default function RequestsPage() {
     const fetchRequests = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/admin/requests", {
-          credentials: "include",
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/requests`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch requests");
@@ -134,12 +133,8 @@ export default function RequestsPage() {
 
   const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
     try {
-      const response = await fetch(`/api/admin/requests/${requestId}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/requests/${requestId}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({ status: newStatus }),
       });
 
@@ -177,9 +172,8 @@ export default function RequestsPage() {
   const handleDeleteConfirm = async () => {
     if (requestToDelete) {
       try {
-        const response = await fetch(`/api/admin/requests/${requestToDelete.id}`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/requests/${requestToDelete.id}`, {
           method: "DELETE",
-          credentials: "include",
         });
 
         if (!response.ok) {

@@ -1,9 +1,8 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8276";
+import { getApiBaseUrl } from "./backend";
 
 export const api: AxiosInstance = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
+  baseURL: getApiBaseUrl(),
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -12,13 +11,15 @@ export const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.baseURL = getApiBaseUrl();
+    
     if (typeof window !== "undefined") {
-      const origin = window.location.origin;
-      if (origin) {
-        config.headers = config.headers ?? {};
-        config.headers["Origin"] = origin;
+      const token = localStorage.getItem("access_token");
+      if (token && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    
     return config;
   },
   (error: AxiosError) => {
@@ -35,8 +36,22 @@ api.interceptors.response.use(
 
       if (status === 401) {
         console.error("Unauthorized");
+        if (typeof window !== "undefined") {
+          const pathname = window.location.pathname;
+          if (pathname.startsWith("/admin")) {
+            console.log("[API Interceptor] 401 on admin route, redirecting to /");
+            window.location.href = "/";
+          }
+        }
       } else if (status === 403) {
         console.error("Forbidden");
+        if (typeof window !== "undefined") {
+          const pathname = window.location.pathname;
+          if (pathname.startsWith("/admin")) {
+            console.log("[API Interceptor] 403 on admin route, redirecting to /");
+            window.location.href = "/";
+          }
+        }
       } else if (status >= 500) {
         console.error("Server error");
       }

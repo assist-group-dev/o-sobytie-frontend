@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { useAppStore } from "@/stores/useAppStore";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 const NAV_LINKS = [
   { href: "#tariffs", label: "Тарифы" },
@@ -36,9 +37,7 @@ export function Header() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch("/api/users/profile", {
-          credentials: "include",
-        });
+        const response = await fetchWithAuth(`${API_BASE_URL}/users/profile`);
         if (response.ok) {
           const data = await response.json();
           setAuth({
@@ -48,17 +47,24 @@ export function Header() {
             role: data.role,
           });
           await fetchProfile();
+        } else {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("access_token");
+          }
+          setAuth(null);
         }
       } catch (error) {
-        // Пользователь не авторизован
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+        }
         setAuth(null);
       }
     };
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       checkAuth();
     }
-  }, [isAuthenticated, setAuth, fetchProfile]);
+  }, [isAuthenticated, user, setAuth, fetchProfile]);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
