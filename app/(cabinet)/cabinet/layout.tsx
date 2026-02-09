@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, CreditCard, MessageCircle, HelpCircle, Ticket, Menu, X } from "lucide-react";
+import { User, MessageCircle, HelpCircle, Ticket, Menu, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Logo } from "@/ui/components/Logo";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
@@ -16,7 +16,6 @@ interface CabinetLayoutProps {
 
 const navigation = [
   { id: "profile", label: "Профиль", href: "/cabinet", icon: User },
-  { id: "subscription", label: "Подписка", href: "/cabinet/subscription", icon: CreditCard },
   { id: "contact", label: "Связь с нами", href: "/cabinet/contact", icon: MessageCircle },
   { id: "faq", label: "FAQ", href: "/cabinet/faq", icon: HelpCircle },
 ];

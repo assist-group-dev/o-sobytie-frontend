@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { User, Package, LogOut, Mail, FileText } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
+import { SubscriptionModal } from "@/app/(cabinet)/components/SubscriptionModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
@@ -17,6 +17,7 @@ export default function CabinetPage() {
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isQuestionnaireCompleted, setIsQuestionnaireCompleted] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { subscription, userData, fetchProfile } = useCabinetStore();
   const { logout } = useAppStore();
 
@@ -61,6 +62,8 @@ export default function CabinetPage() {
 
   const handleQuestionnaireComplete = () => {
     setIsQuestionnaireCompleted(true);
+    setIsQuestionnaireOpen(false);
+    setIsSubscriptionModalOpen(true);
   };
 
   return (
@@ -132,23 +135,22 @@ export default function CabinetPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1">Подписка отсутствует</h3>
                   <p className="text-xs text-[var(--foreground)]/70">
-                    Оформите подписку в разделе "Подписка"
+                    Оформите подписку, нажав на кнопку "Оформить"
                   </p>
                 </div>
               </div>
-              <Link href="/cabinet/subscription" className="shrink-0">
-                <Button
-                  size="sm"
-                  className={cn(
-                    "uppercase tracking-wider shrink-0",
-                    "bg-[var(--color-golden)] text-[var(--background)]",
-                    "hover:opacity-90",
-                    "w-full sm:w-auto"
-                  )}
-                >
-                  Оформить
-                </Button>
-              </Link>
+              <Button
+                size="sm"
+                onClick={() => setIsSubscriptionModalOpen(true)}
+                className={cn(
+                  "uppercase tracking-wider shrink-0",
+                  "bg-[var(--color-golden)] text-[var(--background)]",
+                  "hover:opacity-90",
+                  "w-full sm:w-auto"
+                )}
+              >
+                Оформить
+              </Button>
             </div>
           </div>
         )}
@@ -177,6 +179,16 @@ export default function CabinetPage() {
         isOpen={isQuestionnaireOpen}
         onClose={() => setIsQuestionnaireOpen(false)}
         onComplete={handleQuestionnaireComplete}
+      />
+
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        isQuestionnaireCompleted={isQuestionnaireCompleted}
+        onOpenQuestionnaire={() => {
+          setIsSubscriptionModalOpen(false);
+          setIsQuestionnaireOpen(true);
+        }}
       />
 
       <Modal
