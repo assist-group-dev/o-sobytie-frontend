@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8276";
 
 export async function GET(request: NextRequest) {
-  const url = `${BACKEND_URL}/api/v1/admin/counterparties`;
+  const url = `${BACKEND_URL}/api/admin/counterparties`;
 
   try {
     const cookies = request.cookies.toString();
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const url = `${BACKEND_URL}/api/v1/admin/counterparties`;
+  const url = `${BACKEND_URL}/api/admin/counterparties`;
 
   try {
     const body = await request.json();

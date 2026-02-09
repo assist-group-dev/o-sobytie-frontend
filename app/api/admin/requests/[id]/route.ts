@@ -7,7 +7,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const url = `${BACKEND_URL}/api/v1/admin/requests/${id}/status`;
+  const url = `${BACKEND_URL}/api/admin/requests/${id}/status`;
 
   try {
     const body = await request.json();
@@ -57,7 +57,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const url = `${BACKEND_URL}/api/v1/admin/requests/${id}`;
+  const url = `${BACKEND_URL}/api/admin/requests/${id}`;
 
   try {
     const cookies = request.cookies.toString();

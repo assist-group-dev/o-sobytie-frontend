@@ -7,7 +7,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const url = `${BACKEND_URL}/api/v1/admin/counterparties/${id}`;
+  const url = `${BACKEND_URL}/api/admin/counterparties/${id}`;
 
   try {
     const cookies = request.cookies.toString();

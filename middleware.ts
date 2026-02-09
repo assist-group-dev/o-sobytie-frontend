@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:827
 
 async function verifyToken(token: string): Promise<{ valid: boolean; role?: string }> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/v1/users/profile`, {
+    const response = await fetch(`${BACKEND_URL}/api/users/profile`, {
       method: "GET",
       headers: {
         Cookie: `access_token=${token}`,

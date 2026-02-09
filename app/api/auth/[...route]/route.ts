@@ -8,7 +8,7 @@ export async function POST(
 ) {
   const { route: routeArray } = await params;
   const route = routeArray.join("/");
-  const url = `${BACKEND_URL}/api/v1/auth/${route}`;
+  const url = `${BACKEND_URL}/api/auth/${route}`;
 
   try {
     const cookies = request.cookies.toString();
@@ -40,6 +40,20 @@ export async function POST(
       body,
       credentials: "include",
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText || `HTTP ${response.status}` };
+      }
+      return NextResponse.json(
+        { message: errorData.message ?? "Backend request failed", ...errorData },
+        { status: response.status }
+      );
+    }
 
     const data = await response.json();
 
@@ -96,8 +110,14 @@ export async function POST(
 
     return nextResponse;
   } catch (error) {
+    console.error("Error in /api/auth route:", error);
+    console.error("Backend URL:", url);
     return NextResponse.json(
-      { message: "Internal server error", error: String(error) },
+      { 
+        message: "Internal server error", 
+        error: error instanceof Error ? error.message : String(error),
+        url: url,
+      },
       { status: 500 }
     );
   }

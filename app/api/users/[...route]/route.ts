@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { route: routeArray } = await params;
   const route = routeArray.join("/");
-  const url = `${BACKEND_URL}/api/v1/users/${route}`;
+  const url = `${BACKEND_URL}/api/users/${route}`;
 
   try {
     const cookies = request.cookies.toString();
@@ -40,7 +40,7 @@ export async function PATCH(
 ) {
   const { route: routeArray } = await params;
   const route = routeArray.join("/");
-  const url = `${BACKEND_URL}/api/v1/users/${route}`;
+  const url = `${BACKEND_URL}/api/users/${route}`;
 
   try {
     const body = await request.json();
