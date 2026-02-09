@@ -56,11 +56,11 @@ export default function CabinetPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-0 max-w-2xl">
-        <div className="p-4 sm:p-6">
+      <div className="flex flex-col gap-0 max-w-3xl">
+        <div className="p-4 sm:p-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-1 min-w-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
                 <User className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-[var(--color-golden)]" />
               </div>
               <div className="flex-1 min-w-0">
@@ -91,9 +91,9 @@ export default function CabinetPage() {
         </div>
 
         {subscription ? (
-          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6">
+          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
                 <Package className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
               </div>
               <div className="min-w-0 flex-1">
@@ -102,7 +102,7 @@ export default function CabinetPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20">
               <div>
                 <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">Дата доставки</p>
                 <p className="text-base sm:text-lg font-medium">{subscription.deliveryDate}</p>
@@ -114,10 +114,10 @@ export default function CabinetPage() {
             </div>
           </div>
         ) : (
-          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6">
+          <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
               <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20 flex items-center justify-center shrink-0">
                   <Package className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -143,9 +143,9 @@ export default function CabinetPage() {
           </div>
         )}
 
-        <div className="p-4 sm:p-8 -mt-4 sm:-mt-6">
+        <div className="p-4 sm:p-8 -mt-4 sm:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           {isQuestionnaireCompleted ? (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-6 bg-[var(--color-cream)]/60 dark:bg-[var(--color-cream)]/10">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-golden)]/20 flex items-center justify-center shrink-0">
                 <Check className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
               </div>
