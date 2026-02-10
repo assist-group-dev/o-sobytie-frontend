@@ -188,6 +188,7 @@ export function Table<T>({
                   onClick={() => onRowClick?.(item)}
                   className={cn(
                     "border-b border-[var(--color-cream)]/20 dark:border-[var(--color-cream)]/10 transition-colors",
+                    index % 2 === 0 ? "bg-[var(--background)]" : "bg-[var(--color-cream)]/5 dark:bg-[var(--color-cream)]/10",
                     onRowClick && "cursor-pointer hover:bg-[var(--color-cream)]/20 dark:hover:bg-[var(--color-cream)]/10"
                   )}
                 >
