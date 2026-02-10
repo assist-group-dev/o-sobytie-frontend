@@ -235,9 +235,9 @@ export default function CounterpartiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold uppercase">Контрагенты</h1>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
-          Создать контрагента
+        <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center sm:gap-2 sm:px-5 sm:py-2.5 px-3 py-3">
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Создать контрагента</span>
         </Button>
       </div>
 

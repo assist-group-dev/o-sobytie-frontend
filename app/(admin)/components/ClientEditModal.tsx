@@ -819,7 +819,7 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
             </div>
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+          <div className="flex flex-wrap gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
             {onRevokeAdminRights && (
               <Button
                 type="button"
@@ -829,7 +829,7 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                     onRevokeAdminRights();
                   }
                 }}
-                className="flex-1 border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
               >
                 Отозвать админские права
               </Button>
@@ -843,7 +843,7 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                     onDelete();
                   }
                 }}
-                className="flex-1 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
                 {deleteButtonText}
               </Button>
@@ -858,7 +858,7 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                   }
                 }}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2",
+                  "flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 flex items-center justify-center gap-2",
                   client?.banned
                     ? "border-green-500 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
                     : "border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
@@ -868,10 +868,10 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                 {client?.banned ? "Разбанить" : "Забанить"}
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0">
               Отмена
             </Button>
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0">
               Сохранить
             </Button>
           </div>

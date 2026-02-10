@@ -302,10 +302,10 @@ export default function AdministratorsPage() {
         <h1 className="text-3xl font-bold uppercase mb-2">Администраторы</h1>
         <Button
           onClick={() => setIsCreateModalOpen(true)}
-          className="uppercase tracking-wider flex items-center gap-2"
+          className="uppercase tracking-wider flex items-center sm:gap-2 sm:px-5 sm:py-2.5 px-3 py-3"
         >
           <UserPlus className="h-4 w-4" />
-          Создать администратора
+          <span className="hidden sm:inline">Создать администратора</span>
         </Button>
       </div>
 

@@ -219,7 +219,7 @@ export default function RequestsPage() {
       label: "Способ связи",
       sortable: true,
       render: (item: Request) => (
-        <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <span className="font-medium">
             {contactMethodNames[item.contactMethod] || item.contactMethod}
           </span>
