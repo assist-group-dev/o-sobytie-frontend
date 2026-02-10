@@ -213,9 +213,25 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
               "flex items-center gap-3 min-w-0",
               isCollapsed ? "lg:flex-col lg:gap-2 lg:mx-auto" : "flex-1"
             )}>
-              <div className="w-10 h-10 rounded-full bg-[var(--color-golden)]/30 dark:bg-[var(--color-golden)]/20 flex items-center justify-center shrink-0">
-                <Shield className="h-5 w-5 text-[var(--color-golden)]" />
-              </div>
+              <button
+                onClick={() => {
+                  if (window.innerWidth >= 1024) {
+                    setIsCollapsed(!isCollapsed);
+                  }
+                }}
+                className={cn(
+                  "w-10 h-10 rounded-full bg-[var(--color-golden)]/30 dark:bg-[var(--color-golden)]/20 flex items-center justify-center shrink-0 transition-colors",
+                  "hover:bg-[var(--color-golden)]/40 dark:hover:bg-[var(--color-golden)]/30",
+                  "lg:cursor-pointer hidden lg:flex"
+                )}
+                aria-label={isCollapsed ? "Развернуть" : "Свернуть"}
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-5 w-5 text-[var(--color-golden)]" />
+                ) : (
+                  <Shield className="h-5 w-5 text-[var(--color-golden)]" />
+                )}
+              </button>
               {!isCollapsed && (
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">Администратор</p>
@@ -224,17 +240,15 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsCollapsed(!isCollapsed)}
-                className="hidden lg:flex p-1.5 hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20 rounded transition-colors shrink-0"
-                aria-label={isCollapsed ? "Развернуть" : "Свернуть"}
-              >
-                {isCollapsed ? (
-                  <ChevronRight className="h-4 w-4" />
-                ) : (
+              {!isCollapsed && (
+                <button
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="hidden lg:flex p-1.5 hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20 rounded transition-colors shrink-0"
+                  aria-label="Свернуть"
+                >
                   <ChevronLeft className="h-4 w-4" />
-                )}
-              </button>
+                </button>
+              )}
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="lg:hidden p-1.5 hover:bg-[var(--color-cream)]/30 dark:hover:bg-[var(--color-cream)]/20 rounded transition-colors shrink-0"
