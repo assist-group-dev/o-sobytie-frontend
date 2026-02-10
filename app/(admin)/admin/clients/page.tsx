@@ -17,14 +17,13 @@ import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 interface QuestionnaireData {
   allergies: string;
   dietaryRestrictions: string[];
+  dietaryRestrictionsOther?: string;
   physicalLimitations: string[];
+  physicalLimitationsOther?: string;
   fears: string[];
-  fitnessLevel: string;
-  activityPreference: string;
-  activityTypes: string[];
+  fearsOther?: string;
   timePreference: string[];
   dayPreference: string[];
-  medicalContraindications: string;
   additionalInfo: string;
 }
 
