@@ -41,7 +41,7 @@ export function Toast({ toast, onRemove }: ToastProps) {
     <div
       className={cn(
         "flex items-center gap-2 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border-2 shadow-lg",
-        "w-full sm:min-w-[300px] sm:max-w-[500px]",
+        "w-full sm:min-w-[300px] sm:max-w-[500px] sm:w-auto",
         "animate-slide-in-right",
         styles[toast.type]
       )}

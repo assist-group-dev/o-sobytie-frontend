@@ -178,7 +178,7 @@ export function SubscriptionCards() {
                 <h3 className="text-lg sm:text-xl font-bold uppercase whitespace-nowrap">{tariff.title}</h3>
                 <div className="text-right">
                   {tariff.originalPrice ? (
-                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
                       <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
                     </div>
