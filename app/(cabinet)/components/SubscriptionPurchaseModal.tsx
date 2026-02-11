@@ -5,6 +5,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface Tariff {
   id: string;
@@ -16,11 +17,10 @@ interface SubscriptionPurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   tariff: Tariff;
-  onComplete: (data: SubscriptionFormData) => void;
+  onSuccess?: () => void;
 }
 
 export interface SubscriptionFormData {
-  premiumLevel: string;
   city: string;
   street: string;
   house: string;
@@ -41,11 +41,10 @@ export function SubscriptionPurchaseModal({
   isOpen,
   onClose,
   tariff,
-  onComplete,
+  onSuccess,
 }: SubscriptionPurchaseModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<SubscriptionFormData>({
-    premiumLevel: "elegant",
     city: "",
     street: "",
     house: "",
@@ -55,6 +54,8 @@ export function SubscriptionPurchaseModal({
     deliveryTime: "",
   });
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const steps = [
     {
@@ -83,20 +84,44 @@ export function SubscriptionPurchaseModal({
     }
   };
 
-  const handleSubmit = () => {
-    onComplete(formData);
-    onClose();
-    setCurrentStep(0);
-    setFormData({
-      premiumLevel: "elegant",
-      city: "",
-      street: "",
-      house: "",
-      apartment: "",
-      phone: "",
-      deliveryDate: "",
-      deliveryTime: "",
-    });
+  const handleSubmit = async () => {
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/subscriptions`, {
+        method: "POST",
+        body: JSON.stringify({
+          durationId: tariff.id,
+          city: formData.city.trim(),
+          street: formData.street.trim(),
+          house: formData.house.trim(),
+          apartment: (formData.apartment ?? "").trim(),
+          phone: formData.phone.trim(),
+          deliveryDate: formData.deliveryDate,
+          deliveryTime: formData.deliveryTime,
+        }),
+      });
+      if (!response.ok) {
+        const err = (await response.json()) as { message?: string };
+        throw new Error(err.message ?? "Ошибка оформления подписки");
+      }
+      onSuccess?.();
+      onClose();
+      setCurrentStep(0);
+      setFormData({
+        city: "",
+        street: "",
+        house: "",
+        apartment: "",
+        phone: "",
+        deliveryDate: "",
+        deliveryTime: "",
+      });
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Ошибка оформления подписки");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isStepValid = () => {
@@ -555,6 +580,9 @@ export function SubscriptionPurchaseModal({
           )}
         </div>
 
+        {submitError && (
+          <p className="text-sm text-red-600 dark:text-red-400 mb-3">{submitError}</p>
+        )}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
           {currentStep > 0 && (
             <Button
@@ -571,10 +599,10 @@ export function SubscriptionPurchaseModal({
             <Button
               size="lg"
               onClick={handleSubmit}
-              disabled={!isStepValid()}
+              disabled={!isStepValid() || isSubmitting}
               className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
-              Оформить подписку
+              {isSubmitting ? "Оформление…" : "Оформить подписку"}
             </Button>
           ) : (
             <Button

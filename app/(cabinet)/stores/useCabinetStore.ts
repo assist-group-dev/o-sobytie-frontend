@@ -2,18 +2,20 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { api } from "@/utils/api";
 
-interface Subscription {
-  title: string;
-  duration: string;
-  tariff: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  premiumLevel: string;
+export interface SubscriptionFromApi {
+  id: string;
+  duration: { id: string; name: string; months: number };
+  premiumLevel: { id: string; name: string };
+  status: string;
+  startDate: string;
+  nextPaymentDate: string;
   city: string;
   street: string;
   house: string;
   apartment: string;
   phone: string;
+  deliveryDate: string;
+  deliveryTime: string;
 }
 
 export interface QuestionnaireData {
@@ -40,13 +42,14 @@ interface UserProfile {
   lastLogin?: Date;
   questionnaireCompleted?: boolean;
   questionnaire?: QuestionnaireData | null;
+  subscription?: SubscriptionFromApi | null;
 }
 
 interface CabinetState {
   userData: UserProfile | null;
   setUserData: (data: UserProfile | null) => void;
-  subscription: Subscription | null;
-  setSubscription: (subscription: Subscription | null) => void;
+  subscription: SubscriptionFromApi | null;
+  setSubscription: (subscription: SubscriptionFromApi | null) => void;
   fetchProfile: () => Promise<void>;
   updateProfile: (data: { name?: string; phone?: string; avatar?: string }) => Promise<void>;
   isFetchingProfile: boolean;
@@ -74,7 +77,9 @@ export const useCabinetStore = create<CabinetState>()(
 
         set({ isFetchingProfile: true, fetchProfileError: false });
         try {
-          const response = await api.get<UserProfile>("/users/profile");
+          const response = await api.get<UserProfile & { subscription?: SubscriptionFromApi | null }>(
+            "/users/profile"
+          );
           const data = response.data;
           const userData: UserProfile = {
             id: data.id ?? (data as { _id?: string })._id ?? "",
@@ -87,8 +92,14 @@ export const useCabinetStore = create<CabinetState>()(
             lastLogin: data.lastLogin,
             questionnaireCompleted: data.questionnaireCompleted ?? false,
             questionnaire: data.questionnaire ?? null,
+            subscription: data.subscription ?? null,
           };
-          set({ userData, isFetchingProfile: false, fetchProfileError: false });
+          set({
+            userData,
+            subscription: data.subscription ?? null,
+            isFetchingProfile: false,
+            fetchProfileError: false,
+          });
         } catch (error) {
           console.error("Failed to fetch profile:", error);
           set({ isFetchingProfile: false, fetchProfileError: true });

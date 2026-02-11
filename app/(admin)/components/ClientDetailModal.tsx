@@ -3,6 +3,7 @@
 import { Modal } from "@/ui/components/Modal";
 import { Card } from "@/ui/components/Card";
 import { cn } from "@/utils/cn";
+import type { SubscriptionFromApi } from "@/app/(admin)/admin/clients/page";
 
 interface QuestionnaireData {
   allergies: string;
@@ -17,19 +18,6 @@ interface QuestionnaireData {
   additionalInfo: string;
 }
 
-interface SubscriptionData {
-  premiumLevel: string;
-  city: string;
-  street: string;
-  house: string;
-  apartment: string;
-  phone: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  tariff: string;
-  duration: string;
-}
-
 interface Client {
   id: string;
   name: string;
@@ -39,7 +27,7 @@ interface Client {
   subscriptionActive?: boolean;
   banned?: boolean;
   questionnaire?: QuestionnaireData;
-  subscription?: SubscriptionData;
+  subscription?: SubscriptionFromApi | null;
 }
 
 interface ClientDetailModalProps {
@@ -47,12 +35,6 @@ interface ClientDetailModalProps {
   onClose: () => void;
   client: Client | null;
 }
-
-const premiumLevelNames: Record<string, string> = {
-  elegant: "Элегантный",
-  cozy: "Уютный",
-  special: "Особенный",
-};
 
 export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModalProps) {
   if (!client) return null;
@@ -107,45 +89,80 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
             </div>
           </Card>
 
-          {client.subscriptionActive && client.subscription && (
+          {client.subscription != null && (
             <Card>
               <h3 className="text-lg font-bold mb-4">Данные подписки</h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Тариф</p>
-                    <p className="font-medium">{client.subscription.tariff}</p>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Тариф / Срок</p>
+                    <p className="font-medium">{client.subscription.duration?.name ?? "—"}</p>
                   </div>
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Длительность</p>
-                    <p className="font-medium">{client.subscription.duration}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Уровень премиальности</p>
                     <p className="font-medium">
-                      {premiumLevelNames[client.subscription.premiumLevel] || client.subscription.premiumLevel}
+                      {client.subscription.duration?.months != null
+                        ? `${client.subscription.duration.months} мес.`
+                        : "—"}
                     </p>
                   </div>
                   <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Уровень премиальности</p>
+                    <p className="font-medium">{client.subscription.premiumLevel?.name ?? "—"}</p>
+                  </div>
+                  <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Телефон</p>
-                    <p className="font-medium">{client.subscription.phone}</p>
+                    <p className="font-medium">{client.subscription.phone ?? "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Дата оформления подписки</p>
+                    <p className="font-medium">
+                      {client.subscription.startDate
+                        ? new Date(client.subscription.startDate).toLocaleDateString("ru-RU", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Дата окончания подписки</p>
+                    <p className="font-medium">
+                      {client.subscription.nextPaymentDate
+                        ? new Date(client.subscription.nextPaymentDate).toLocaleDateString("ru-RU", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "—"}
+                    </p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-[var(--foreground)]/60 mb-1">Адрес доставки</p>
                   <p className="font-medium">
-                    {client.subscription.city}, {client.subscription.street}, д. {client.subscription.house}
-                    {client.subscription.apartment && `, кв. ${client.subscription.apartment}`}
+                    {[client.subscription.city, client.subscription.street, `д. ${client.subscription.house}`, client.subscription.apartment ? `кв. ${client.subscription.apartment}` : null]
+                      .filter(Boolean)
+                      .join(", ") || "—"}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Дата доставки</p>
-                    <p className="font-medium">{client.subscription.deliveryDate}</p>
+                    <p className="font-medium">
+                      {client.subscription.deliveryDate
+                        ? new Date(client.subscription.deliveryDate).toLocaleDateString("ru-RU", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "—"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Время доставки</p>
-                    <p className="font-medium">{client.subscription.deliveryTime}</p>
+                    <p className="font-medium">{client.subscription.deliveryTime ?? "—"}</p>
                   </div>
                 </div>
               </div>

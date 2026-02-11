@@ -27,8 +27,13 @@ interface QuestionnaireData {
   additionalInfo: string;
 }
 
-interface SubscriptionData {
-  premiumLevel: string;
+export interface SubscriptionFromApi {
+  id: string;
+  duration: { id: string; name: string; months: number };
+  premiumLevel: { id: string; name: string };
+  status: string;
+  startDate: string;
+  nextPaymentDate: string;
   city: string;
   street: string;
   house: string;
@@ -36,8 +41,20 @@ interface SubscriptionData {
   phone: string;
   deliveryDate: string;
   deliveryTime: string;
-  tariff: string;
-  duration: string;
+}
+
+export interface SubscriptionPatchPayload {
+  id: string;
+  status: string;
+  durationId: string;
+  premiumLevelId: string;
+  city: string;
+  street: string;
+  house: string;
+  apartment: string;
+  phone: string;
+  deliveryDate: string;
+  deliveryTime: string;
 }
 
 interface Client {
@@ -50,7 +67,7 @@ interface Client {
   subscriptionActive?: boolean;
   banned: boolean;
   questionnaire?: QuestionnaireData;
-  subscription?: SubscriptionData;
+  subscription?: SubscriptionFromApi | null;
 }
 
 export default function ClientsPage() {
@@ -85,8 +102,7 @@ export default function ClientsPage() {
           questionnaireCompleted?: boolean;
           questionnaire?: QuestionnaireData;
           eventDate?: string;
-          subscriptionActive?: boolean;
-          subscription?: SubscriptionData;
+          subscription?: SubscriptionFromApi | null;
         }>;
         setClients(
           data.map((client) => ({
@@ -97,8 +113,8 @@ export default function ClientsPage() {
             questionnaireCompleted: client.questionnaireCompleted ?? false,
             questionnaire: client.questionnaire,
             eventDate: client.eventDate,
-            subscriptionActive: client.subscriptionActive,
-            subscription: client.subscription,
+            subscriptionActive: !!client.subscription,
+            subscription: client.subscription ?? null,
           }))
         );
       } catch (error) {
@@ -150,15 +166,18 @@ export default function ClientsPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSave = async (data: Partial<Client>) => {
+  const handleSave = async (data: Partial<Client> & { subscription?: SubscriptionPatchPayload }) => {
     if (!selectedClient) return;
-    const hasPersistableUpdate =
+    const hasClientUpdate =
       data.name !== undefined ||
       data.phone !== undefined ||
       data.questionnaire !== undefined ||
       data.questionnaireCompleted !== undefined;
-    if (hasPersistableUpdate) {
-      try {
+    const hasSubscriptionUpdate = data.subscription != null && data.subscription.id;
+
+    try {
+      let clientAfterPatch: Client = selectedClient;
+      if (hasClientUpdate) {
         const body: {
           name?: string;
           phone?: string | null;
@@ -174,54 +193,58 @@ export default function ClientsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        if (!response.ok) {
-          throw new Error("Failed to update client");
-        }
+        if (!response.ok) throw new Error("Failed to update client");
         const updated = (await response.json()) as Client;
-        setClients(
-          clients.map((item) =>
-            item.id === selectedClient.id
-              ? {
-                  ...item,
-                  name: updated.name,
-                  phone: updated.phone,
-                  questionnaire: updated.questionnaire,
-                  questionnaireCompleted: updated.questionnaireCompleted ?? false,
-                }
-              : item
-          )
-        );
-        setSelectedClient((prev) =>
-          prev?.id === selectedClient.id
-            ? {
-                ...prev,
-                name: updated.name,
-                phone: updated.phone,
-                questionnaire: updated.questionnaire,
-                questionnaireCompleted: updated.questionnaireCompleted ?? false,
-              }
-            : prev
-        );
-        addToast({
-          type: "success",
-          message: `Клиент "${selectedClient.name}" успешно отредактирован`,
-        });
-      } catch (error) {
-        console.error("Error updating client:", error);
-        addToast({
-          type: "error",
-          message: "Ошибка сохранения данных клиента",
-        });
+        clientAfterPatch = { ...selectedClient, ...updated };
       }
-    } else {
+
+      let updatedSubscription: SubscriptionFromApi | null = clientAfterPatch.subscription ?? null;
+      if (hasSubscriptionUpdate && data.subscription) {
+        const sub = data.subscription;
+        const subBody = {
+          status: sub.status,
+          durationId: sub.durationId,
+          premiumLevelId: sub.premiumLevelId,
+          city: sub.city,
+          street: sub.street,
+          house: sub.house,
+          apartment: sub.apartment ?? "",
+          phone: sub.phone,
+          deliveryDate: sub.deliveryDate,
+          deliveryTime: sub.deliveryTime,
+        };
+        const subResponse = await fetchWithAuth(
+          `${API_BASE_URL}/admin/subscriptions/${sub.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(subBody),
+          }
+        );
+        if (!subResponse.ok) throw new Error("Failed to update subscription");
+        updatedSubscription = (await subResponse.json()) as SubscriptionFromApi;
+      }
+
+      const updatedClient: Client = {
+        ...clientAfterPatch,
+        ...(hasSubscriptionUpdate && { subscription: updatedSubscription, subscriptionActive: !!updatedSubscription }),
+      };
+
       setClients(
         clients.map((item) =>
-          item.id === selectedClient.id ? { ...item, ...data } : item
+          item.id === selectedClient.id ? updatedClient : item
         )
       );
+      setSelectedClient(updatedClient);
       addToast({
         type: "success",
         message: `Клиент "${selectedClient.name}" успешно отредактирован`,
+      });
+    } catch (error) {
+      console.error("Error saving client:", error);
+      addToast({
+        type: "error",
+        message: "Ошибка сохранения данных клиента",
       });
     }
   };

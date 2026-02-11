@@ -55,7 +55,9 @@ export default function CabinetPage() {
         localStorage.removeItem("access_token");
       }
       logout();
-      useCabinetStore.getState().setUserData(null);
+      const cabinet = useCabinetStore.getState();
+      cabinet.setUserData(null);
+      cabinet.setSubscription(null);
       setIsLogoutModalOpen(false);
       router.push("/");
     }
@@ -120,19 +122,52 @@ export default function CabinetPage() {
                 <Package className="h-5 w-5 sm:h-6 sm:w-6 text-[var(--color-golden)]" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">{subscription.title}</h3>
-                <p className="text-xs sm:text-sm text-[var(--foreground)]/70">{subscription.duration}</p>
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-0.5 sm:mb-1 truncate">
+                  Ваша подписка
+                </h3>
+                <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
+                  {subscription.duration.name} • Следующее списание:{" "}
+                  {new Date(subscription.nextPaymentDate).toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
 
-            <div className="flex items-start justify-between gap-4 sm:gap-6 lg:gap-8 pt-3 sm:pt-4 lg:pt-6 px-[30px] border-t border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20">
+            <div className="space-y-3 sm:space-y-4 pt-3 sm:pt-4 lg:pt-6 border-t border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20">
               <div>
-                <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">Дата доставки</p>
-                <p className="text-sm sm:text-base lg:text-lg font-medium">{subscription.deliveryDate}</p>
+                <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">
+                  Адрес доставки
+                </p>
+                <p className="text-sm sm:text-base font-medium">
+                  {[subscription.city, subscription.street, `д. ${subscription.house}`, subscription.apartment ? `кв. ${subscription.apartment}` : null]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
               </div>
-              <div>
-                <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">Время доставки</p>
-                <p className="text-sm sm:text-base lg:text-lg font-medium">{subscription.deliveryTime}</p>
+              <div className="flex items-start justify-between gap-4 sm:gap-6">
+                <div>
+                  <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">
+                    Дата доставки
+                  </p>
+                  <p className="text-sm sm:text-base lg:text-lg font-medium">
+                    {new Date(subscription.deliveryDate).toLocaleDateString("ru-RU", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm text-[var(--foreground)]/60 mb-1 sm:mb-2">
+                    Время доставки
+                  </p>
+                  <p className="text-sm sm:text-base lg:text-lg font-medium">
+                    {subscription.deliveryTime}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

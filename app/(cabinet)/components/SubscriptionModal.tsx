@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
-import { SubscriptionPurchaseModal, SubscriptionFormData } from "./SubscriptionPurchaseModal";
+import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
+import { fetchTariffs, type TariffCard } from "@/app/(landing)/utils/tariffs";
 
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
@@ -20,75 +20,6 @@ const maskEmail = (email: string): string => {
   return `${visibleStart}***${visibleEnd}@${domain}`;
 };
 
-interface Tariff {
-  id: string;
-  title: string;
-  description: string;
-  fullDescription: string;
-  price: string;
-  originalPrice?: string;
-  discount?: string;
-  image: string;
-  features: string[];
-  details: string[];
-}
-
-const TARIFFS: Tariff[] = [
-  {
-    id: "1-month",
-    title: "1 месяц",
-    description: "Попробуйте О!СОБЫТИЕ на один месяц. Идеально для первого знакомства.",
-    fullDescription: "Подписка на 1 месяц — это отличный способ познакомиться с форматом О!СОБЫТИЕ. Вы получите одну коробку с тщательно отобранным впечатлением, которое поможет вам открыть что-то новое и получить максимум удовольствия. Если вам понравится, вы всегда сможете продлить подписку на более выгодных условиях.",
-    price: "2 990 ₽",
-    image: "/boxes/Box_2.jpg",
-    features: ["1 коробка", "Гибкая подписка", "Без обязательств"],
-    details: [
-      "Коробка с готовым впечатлением",
-      "Материалы для незабываемого опыта",
-      "Инструкции и рекомендации",
-      "Возможность продления подписки",
-      "Отмена в любой момент",
-    ],
-  },
-  {
-    id: "3-month",
-    title: "3 месяца",
-    description: "Три месяца незабываемых впечатлений с выгодой 10%. Лучший выбор для регулярных открытий.",
-    fullDescription: "Подписка на 3 месяца — это оптимальный баланс между гибкостью и выгодой. Вы получаете по одной коробке в месяц с уникальными впечатлениями и экономите 10% от стоимости.\nЭто идеальный вариант для тех, кто хочет ежемесячно получать новые эмоции и открывать для себя что-то интересное.",
-    price: "8 073 ₽",
-    originalPrice: "8 970 ₽",
-    discount: "Экономия 10%",
-    image: "/boxes/Box_1.jpg",
-    features: ["3 коробки", "Экономия 10%", "897 ₽ за месяц"],
-    details: [
-      "Три коробки с впечатлениями",
-      "Экономия 897 ₽ по сравнению с помесячной оплатой",
-      "Разнообразие активностей и событий",
-      "Приоритетная поддержка",
-      "Возможность заморозки на 1 месяц",
-    ],
-  },
-  {
-    id: "6-month",
-    title: "6 месяцев",
-    description: "Полгода впечатлений с максимальной выгодой 20%. Для тех, кто уверен в своём выборе.",
-    fullDescription: "Подписка на 6 месяцев — это максимум выгоды (20%) и долгосрочное обещание себе. Это полгода незабываемых впечатлений: вы будете получать по одной уникальной коробке каждый месяц.\nЭто выбор для тех, кто уверен в своём желании сделать новые открытия и яркие эмоции частью своей жизни на целых полгода вперёд.",
-    price: "14 352 ₽",
-    originalPrice: "17 940 ₽",
-    discount: "Экономия 20%",
-    image: "/boxes/Box_3.jpg",
-    features: ["6 коробок", "Экономия 20%", "2 392 ₽ за месяц"],
-    details: [
-      "Шесть коробок с впечатлениями",
-      "Экономия 3 588 ₽ по сравнению с помесячной оплатой",
-      "Эксклюзивные события и активности",
-      "Приоритетная поддержка 24/7",
-      "Возможность заморозки до 2 месяцев",
-      "Бонусные материалы в каждой коробке",
-    ],
-  },
-];
-
 interface SubscriptionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -99,17 +30,26 @@ interface SubscriptionModalProps {
 export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, onOpenQuestionnaire }: SubscriptionModalProps) {
   const { userData } = useCabinetStore();
   const { addToast } = useToastStore();
-  const [selectedTariff, setSelectedTariff] = useState<Tariff | null>(null);
+  const [tariffs, setTariffs] = useState<TariffCard[]>([]);
+  const [tariffsLoading, setTariffsLoading] = useState(true);
+  const [selectedTariff, setSelectedTariff] = useState<TariffCard | null>(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
-  const [giftTariff, setGiftTariff] = useState<Tariff | null>(null);
+  const [giftTariff, setGiftTariff] = useState<TariffCard | null>(null);
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-  const [purchaseTariff, setPurchaseTariff] = useState<Tariff | null>(null);
+  const [purchaseTariff, setPurchaseTariff] = useState<TariffCard | null>(null);
   const [isQuestionnaireRequiredModalOpen, setIsQuestionnaireRequiredModalOpen] = useState(false);
 
-  const userEmail = (userData?.email as string) || "ivan@example.com";
-  const maskedEmail = maskEmail(userEmail);
+  useEffect(() => {
+    fetchTariffs().then((data) => {
+      setTariffs(data);
+      setTariffsLoading(false);
+    });
+  }, []);
+
+  const userEmail = (userData?.email as string) ?? "";
+  const maskedEmail = userEmail ? maskEmail(userEmail) : "";
 
   const generatePromoCode = () => {
     return `GIFT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
@@ -166,20 +106,26 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
       >
         <div className="p-4 sm:p-6 lg:p-8">
           <h2 className="text-2xl sm:text-3xl font-bold uppercase mb-4 sm:mb-6">Выберите тариф</h2>
+          {tariffsLoading ? (
+            <p className="text-[var(--foreground)]/70 py-6">Загрузка тарифов…</p>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-            {TARIFFS.map((tariff) => (
+            {tariffs.map((tariff) => (
               <div
                 key={tariff.id}
                 className="group cursor-pointer"
                 onClick={() => setSelectedTariff(tariff)}
               >
                 <div className="relative aspect-square mb-6 overflow-hidden bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20">
-                  <Image
-                    src={tariff.image}
-                    alt={tariff.title}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  {tariff.image ? (
+                    <img
+                      src={tariff.image}
+                      alt={tariff.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[var(--color-cream)]/50" />
+                  )}
                   {tariff.discount && (
                     <div className="absolute top-4 left-4">
                       <span className="bg-[var(--color-golden)] text-black text-xs font-bold px-2 py-1 uppercase tracking-wider">
@@ -187,7 +133,7 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
                       </span>
                     </div>
                   )}
-                  {!tariff.discount && tariff.id === "1-month" && (
+                  {!tariff.discount && (
                     <div className="absolute top-4 left-4">
                       <span className="bg-[var(--color-cream)]/80 dark:bg-[var(--color-cream)]/60 text-[var(--foreground)] text-xs font-bold px-2 py-1 uppercase tracking-wider">
                         Попробовать
@@ -231,6 +177,7 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
               </div>
             ))}
           </div>
+          )}
         </div>
       </Modal>
 
@@ -243,13 +190,15 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
           <div className="flex flex-col lg:flex-row lg:items-stretch">
             <div className="relative w-full h-[400px] sm:h-[450px] lg:h-auto lg:w-[55%] order-1 flex-shrink-0 lg:aspect-square">
               <div className="relative h-full w-full bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20">
-                <Image
-                  src={selectedTariff.image}
-                  alt={selectedTariff.title}
-                  fill
-                  className="object-cover lg:object-contain"
-                  priority
-                />
+                {selectedTariff.image ? (
+                  <img
+                    src={selectedTariff.image}
+                    alt={selectedTariff.title}
+                    className="w-full h-full object-cover lg:object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[var(--color-cream)]/50" />
+                )}
               </div>
             </div>
 
@@ -404,49 +353,14 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
             title: purchaseTariff.title,
             price: purchaseTariff.price,
           }}
-          onComplete={(data: SubscriptionFormData) => {
-            const { setSubscription } = useCabinetStore.getState();
-            const deliveryDateObj = new Date(data.deliveryDate);
-            const deliveryDateFormatted = deliveryDateObj.toLocaleDateString("ru-RU", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-            });
-            
-            const timeSlots = [
-              { value: "09:00-12:00", label: "09:00 - 12:00" },
-              { value: "12:00-15:00", label: "12:00 - 15:00" },
-              { value: "15:00-18:00", label: "15:00 - 18:00" },
-              { value: "18:00-21:00", label: "18:00 - 21:00" },
-            ];
-            const deliveryTimeFormatted = timeSlots.find(slot => slot.value === data.deliveryTime)?.label || data.deliveryTime;
-            
-            const premiumLevelNames: Record<string, string> = {
-              elegant: "Элегантный",
-              cozy: "Уютный",
-              special: "Особенный",
-            };
-            
-            setSubscription({
-              title: premiumLevelNames[data.premiumLevel] || data.premiumLevel,
-              duration: purchaseTariff.title,
-              tariff: purchaseTariff.price,
-              deliveryDate: deliveryDateFormatted,
-              deliveryTime: deliveryTimeFormatted,
-              premiumLevel: data.premiumLevel,
-              city: data.city,
-              street: data.street,
-              house: data.house,
-              apartment: data.apartment,
-              phone: data.phone,
-            });
-            
+          onSuccess={async () => {
+            const { fetchProfile } = useCabinetStore.getState();
+            await fetchProfile();
             addToast({
               type: "success",
-              message: "Подписка успешно оформлена! Мы свяжемся с вами для подтверждения заказа.",
+              message: "Подписка успешно оформлена.",
               duration: 5000,
             });
-            
             setIsPurchaseModalOpen(false);
             setPurchaseTariff(null);
             handleClose();

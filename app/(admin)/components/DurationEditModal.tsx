@@ -5,52 +5,67 @@ import { X, Power } from "lucide-react";
 import { Modal } from "@/ui/components/Modal";
 import { Button } from "@/ui/components/Button";
 import { cn } from "@/utils/cn";
+import type { DurationApi } from "@/app/(admin)/admin/tariffs/page";
 
-interface Duration {
-  id: string;
-  name: string;
-  discount: string;
-  description: string;
-  image: string;
-  isActive?: boolean;
-}
-
-interface DurationEditModalProps {
+export interface DurationEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  duration: Duration | null;
-  onSave: (data: Partial<Duration>) => void;
+  duration: DurationApi | null;
+  backendUrl: string;
+  onSave: (
+    data: {
+      name?: string;
+      discountPercent?: number;
+      description?: string;
+      image?: string;
+      isActive?: boolean;
+    },
+    imageFile?: File
+  ) => void;
   onActivate?: () => void;
 }
 
-export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivate }: DurationEditModalProps) {
+export function DurationEditModal({
+  isOpen,
+  onClose,
+  duration,
+  backendUrl,
+  onSave,
+  onActivate,
+}: DurationEditModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<Partial<Duration>>({
-    name: "",
-    discount: "0",
-    description: "",
-    image: "",
-    isActive: true,
-  });
+  const [name, setName] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [description, setDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [pendingImageFile, setPendingImageFile] = useState<File | undefined>(undefined);
 
   useEffect(() => {
     if (duration) {
-      const discountValue = duration.discount?.replace("%", "") || "0";
-      setFormData({
-        name: duration.name || "",
-        discount: discountValue,
-        description: duration.description || "",
-        image: duration.image || "",
-        isActive: duration.isActive ?? true,
-      });
-      setImagePreview(duration.image || "");
+      setName(duration.name ?? "");
+      setDiscountPercent(duration.discountPercent ?? 0);
+      setDescription(duration.description ?? "");
+      setIsActive(duration.isActive ?? true);
+      setPendingImageFile(undefined);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      if (duration.image) {
+        const url = duration.image.startsWith("http")
+          ? duration.image
+          : `${backendUrl}${duration.image}`;
+        setImagePreview(url);
+      } else {
+        setImagePreview("");
+      }
     }
-  }, [duration]);
+  }, [duration, backendUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setPendingImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -61,6 +76,7 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
 
   const handleRemoveImage = () => {
     setImagePreview("");
+    setPendingImageFile(undefined);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -70,18 +86,25 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const dataToSave = {
-      ...formData,
-      discount: `${formData.discount}%`,
-    };
-    onSave(dataToSave);
-    onClose();
+    const imageCleared = !imagePreview && duration.image;
+    onSave(
+      {
+        name: name.trim() || undefined,
+        discountPercent,
+        description: description.trim() || undefined,
+        isActive,
+        ...(imageCleared && { image: "" }),
+      },
+      pendingImageFile
+    );
   };
 
-  const discountValue = parseInt(formData.discount || "0", 10);
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-2xl w-full mx-2 sm:mx-4 max-h-[90vh]">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      className="p-0 max-w-2xl w-full mx-2 sm:mx-4 max-h-[90vh]"
+    >
       <div className="p-6 overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl font-bold uppercase mb-6">Редактирование срока</h2>
 
@@ -94,8 +117,8 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
               <input
                 id="name"
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className={cn(
                   "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                   "bg-[var(--background)] text-[var(--foreground)]",
@@ -111,7 +134,7 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
                   Размер скидки
                 </label>
                 <span className="text-sm font-medium text-[var(--color-golden)]">
-                  {discountValue}%
+                  {discountPercent}%
                 </span>
               </div>
               <input
@@ -120,11 +143,11 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
                 min="0"
                 max="100"
                 step="5"
-                value={discountValue}
-                onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
+                value={discountPercent}
+                onChange={(e) => setDiscountPercent(Number(e.target.value))}
                 className="w-full h-2 bg-[var(--color-cream)] rounded-lg appearance-none cursor-pointer accent-[var(--color-golden)]"
                 style={{
-                  background: `linear-gradient(to right, var(--color-golden) 0%, var(--color-golden) ${discountValue}%, var(--color-cream) ${discountValue}%, var(--color-cream) 100%)`,
+                  background: `linear-gradient(to right, var(--color-golden) 0%, var(--color-golden) ${discountPercent}%, var(--color-cream) ${discountPercent}%, var(--color-cream) 100%)`,
                 }}
               />
               <div className="flex justify-between text-xs text-[var(--foreground)]/50 mt-1">
@@ -139,8 +162,8 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
               </label>
               <textarea
                 id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 rows={4}
                 className={cn(
                   "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
@@ -195,11 +218,7 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  if (onActivate) {
-                    onActivate();
-                  }
-                }}
+                onClick={() => onActivate?.()}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2",
                   duration?.isActive
@@ -223,4 +242,3 @@ export function DurationEditModal({ isOpen, onClose, duration, onSave, onActivat
     </Modal>
   );
 }
-

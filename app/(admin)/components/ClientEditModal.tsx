@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal } from "@/ui/components/Modal";
 import { Button } from "@/ui/components/Button";
 import { Check, Ban } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
+import type { SubscriptionFromApi, SubscriptionPatchPayload } from "@/app/(admin)/admin/clients/page";
 
 interface QuestionnaireData {
   allergies: string;
@@ -19,19 +21,6 @@ interface QuestionnaireData {
   additionalInfo: string;
 }
 
-interface SubscriptionData {
-  premiumLevel: string;
-  city: string;
-  street: string;
-  house: string;
-  apartment: string;
-  phone: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  tariff: string;
-  duration: string;
-}
-
 interface Client {
   id: string;
   name: string;
@@ -41,18 +30,29 @@ interface Client {
   subscriptionActive?: boolean;
   banned?: boolean;
   questionnaire?: QuestionnaireData;
-  subscription?: SubscriptionData;
+  subscription?: SubscriptionFromApi | null;
 }
 
 interface ClientEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
-  onSave: (data: Partial<Client>) => void;
+  onSave: (data: Partial<Client> & { subscription?: SubscriptionPatchPayload }) => void;
   onBan?: () => void;
   onDelete?: () => void;
   onRevokeAdminRights?: () => void;
   deleteButtonText?: string;
+}
+
+interface DurationOption {
+  _id: string;
+  name: string;
+  months: number;
+}
+
+interface PremiumLevelOption {
+  _id: string;
+  name: string;
 }
 
 const dietaryOptions = ["Без ограничений", "Вегетарианство", "Веганство", "Халяль", "Без глютена", "Без лактозы", "Другое"];
@@ -60,17 +60,28 @@ const physicalLimitationOptions = ["Без ограничений", "Пробл�
 const fearOptions = ["Без ограничений", "Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
 const timePreferenceOptions = ["Утро", "День", "Вечер"];
 const dayPreferenceOptions = ["Будни", "Выходные", "Любые дни"];
-const premiumLevelOptions = [
-  { id: "elegant", name: "Элегантный" },
-  { id: "cozy", name: "Уютный" },
-  { id: "special", name: "Особенный" },
-];
-const deliveryTimeSlots = [
-  { value: "09:00-12:00", label: "09:00 - 12:00" },
-  { value: "12:00-15:00", label: "12:00 - 15:00" },
-  { value: "15:00-18:00", label: "15:00 - 18:00" },
-  { value: "18:00-21:00", label: "18:00 - 21:00" },
-];
+const SUBSCRIPTION_STATUSES = [
+  { value: "active", label: "Активна" },
+  { value: "grace", label: "Льготный период" },
+  { value: "expired", label: "Истекла" },
+  { value: "cancelled", label: "Отменена" },
+] as const;
+
+function subscriptionToEditPayload(s: SubscriptionFromApi): SubscriptionPatchPayload {
+  return {
+    id: s.id,
+    status: s.status,
+    durationId: s.duration?.id ?? "",
+    premiumLevelId: s.premiumLevel?.id ?? "",
+    city: s.city ?? "",
+    street: s.street ?? "",
+    house: s.house ?? "",
+    apartment: s.apartment ?? "",
+    phone: s.phone ?? "",
+    deliveryDate: s.deliveryDate ? String(s.deliveryDate).slice(0, 10) : "",
+    deliveryTime: s.deliveryTime ?? "",
+  };
+}
 
 export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete, onRevokeAdminRights, deleteButtonText = "Удалить" }: ClientEditModalProps) {
   const [activeTab, setActiveTab] = useState<"main" | "questionnaire" | "subscription">("main");
@@ -92,29 +103,21 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
       dayPreference: [],
       additionalInfo: "",
     },
-    subscription: {
-      premiumLevel: "",
-      city: "",
-      street: "",
-      house: "",
-      apartment: "",
-      phone: "",
-      deliveryDate: "",
-      deliveryTime: "",
-      tariff: "",
-      duration: "",
-    },
+    subscription: null,
   });
+  const [subscriptionEdit, setSubscriptionEdit] = useState<SubscriptionPatchPayload | null>(null);
+  const [durations, setDurations] = useState<DurationOption[]>([]);
+  const [premiumLevels, setPremiumLevels] = useState<PremiumLevelOption[]>([]);
 
   useEffect(() => {
     if (client) {
       setFormData({
-        name: client.name || "",
-        email: client.email || "",
-        eventDate: client.eventDate || "",
-        questionnaireCompleted: client.questionnaireCompleted || false,
-        subscriptionActive: client.subscriptionActive || false,
-        questionnaire: client.questionnaire || {
+        name: client.name ?? "",
+        email: client.email ?? "",
+        eventDate: client.eventDate ?? "",
+        questionnaireCompleted: client.questionnaireCompleted ?? false,
+        subscriptionActive: client.subscriptionActive ?? false,
+        questionnaire: client.questionnaire ?? {
           allergies: "",
           dietaryRestrictions: [],
           dietaryRestrictionsOther: "",
@@ -126,27 +129,48 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
           dayPreference: [],
           additionalInfo: "",
         },
-        subscription: client.subscription || {
-          premiumLevel: "",
-          city: "",
-          street: "",
-          house: "",
-          apartment: "",
-          phone: "",
-          deliveryDate: "",
-          deliveryTime: "",
-          tariff: "",
-          duration: "",
-        },
+        subscription: client.subscription ?? null,
       });
+      setSubscriptionEdit(
+        client.subscription ? subscriptionToEditPayload(client.subscription) : null
+      );
     }
   }, [client]);
+
+  const loadTariffOptions = useCallback(async () => {
+    try {
+      const [durRes, plRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE_URL}/admin/tariffs/durations`),
+        fetchWithAuth(`${API_BASE_URL}/admin/tariffs/premium-levels`),
+      ]);
+      if (durRes.ok) {
+        const data = (await durRes.json()) as DurationOption[];
+        setDurations(Array.isArray(data) ? data : []);
+      }
+      if (plRes.ok) {
+        const data = (await plRes.json()) as PremiumLevelOption[];
+        setPremiumLevels(Array.isArray(data) ? data : []);
+      }
+    } catch {
+      setDurations([]);
+      setPremiumLevels([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && client?.subscription) {
+      loadTariffOptions();
+    }
+  }, [isOpen, client?.subscription, loadTariffOptions]);
 
   if (!client) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...formData,
+      subscription: subscriptionEdit ?? undefined,
+    });
     onClose();
   };
 
@@ -631,236 +655,244 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
 
           {activeTab === "subscription" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="tariff" className="block text-sm font-medium mb-2">
-                    Тариф
-                  </label>
-                  <input
-                    id="tariff"
-                    type="text"
-                    value={formData.subscription?.tariff || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        subscription: { ...formData.subscription!, tariff: e.target.value },
-                      })
-                    }
-                    className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                      "bg-[var(--background)] text-[var(--foreground)]",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                    )}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="duration" className="block text-sm font-medium mb-2">
-                    Длительность
-                  </label>
-                  <input
-                    id="duration"
-                    type="text"
-                    value={formData.subscription?.duration || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        subscription: { ...formData.subscription!, duration: e.target.value },
-                      })
-                    }
-                    className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                      "bg-[var(--background)] text-[var(--foreground)]",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Уровень премиальности</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {premiumLevelOptions.map((level) => (
-                    <button
-                      key={level.id}
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          subscription: { ...formData.subscription!, premiumLevel: level.id },
-                        })
-                      }
-                      className={cn(
-                        "p-4 text-left border-2 transition-all duration-200",
-                        formData.subscription?.premiumLevel === level.id
-                          ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                          : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
-                      )}
-                    >
-                      <h4 className="font-bold mb-1">{level.name}</h4>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                  Телефон
-                </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  value={formData.subscription?.phone || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      subscription: { ...formData.subscription!, phone: e.target.value },
-                    })
-                  }
-                  className={cn(
-                    "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                    "bg-[var(--background)] text-[var(--foreground)]",
-                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                  )}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium mb-2">
-                  Город
-                </label>
-                <input
-                  id="city"
-                  type="text"
-                  value={formData.subscription?.city || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      subscription: { ...formData.subscription!, city: e.target.value },
-                    })
-                  }
-                  className={cn(
-                    "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                    "bg-[var(--background)] text-[var(--foreground)]",
-                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                  )}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="street" className="block text-sm font-medium mb-2">
-                  Улица
-                </label>
-                <input
-                  id="street"
-                  type="text"
-                  value={formData.subscription?.street || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      subscription: { ...formData.subscription!, street: e.target.value },
-                    })
-                  }
-                  className={cn(
-                    "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                    "bg-[var(--background)] text-[var(--foreground)]",
-                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="house" className="block text-sm font-medium mb-2">
-                    Дом
-                  </label>
-                  <input
-                    id="house"
-                    type="text"
-                    value={formData.subscription?.house || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        subscription: { ...formData.subscription!, house: e.target.value },
-                      })
-                    }
-                    className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                      "bg-[var(--background)] text-[var(--foreground)]",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                    )}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="apartment" className="block text-sm font-medium mb-2">
-                    Квартира
-                  </label>
-                  <input
-                    id="apartment"
-                    type="text"
-                    value={formData.subscription?.apartment || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        subscription: { ...formData.subscription!, apartment: e.target.value },
-                      })
-                    }
-                    className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                      "bg-[var(--background)] text-[var(--foreground)]",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="deliveryDate" className="block text-sm font-medium mb-2">
-                    Дата доставки
-                  </label>
-                  <input
-                    id="deliveryDate"
-                    type="date"
-                    value={formData.subscription?.deliveryDate || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        subscription: { ...formData.subscription!, deliveryDate: e.target.value },
-                      })
-                    }
-                    className={cn(
-                      "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                      "bg-[var(--background)] text-[var(--foreground)]",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
-                    )}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Время доставки</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {deliveryTimeSlots.map((slot) => (
-                      <button
-                        key={slot.value}
-                        type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            subscription: { ...formData.subscription!, deliveryTime: slot.value },
-                          })
+              {subscriptionEdit ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Дата оформления подписки</label>
+                      <p className="px-4 py-2 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 rounded border border-[var(--color-cream)]/50 text-[var(--foreground)]">
+                        {formData.subscription?.startDate
+                          ? new Date(formData.subscription.startDate).toLocaleDateString("ru-RU", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Дата окончания подписки</label>
+                      <p className="px-4 py-2 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 rounded border border-[var(--color-cream)]/50 text-[var(--foreground)]">
+                        {formData.subscription?.nextPaymentDate
+                          ? new Date(formData.subscription.nextPaymentDate).toLocaleDateString("ru-RU", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="sub-status" className="block text-sm font-medium mb-2">
+                        Статус
+                      </label>
+                      <select
+                        id="sub-status"
+                        value={subscriptionEdit.status}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, status: e.target.value })
                         }
                         className={cn(
-                          "px-3 py-2 border-2 transition-all duration-200 text-left",
-                          formData.subscription?.deliveryTime === slot.value
-                            ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                            : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
                         )}
                       >
-                        <span className="text-xs">{slot.label}</span>
-                      </button>
-                    ))}
+                        {SUBSCRIPTION_STATUSES.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="sub-duration" className="block text-sm font-medium mb-2">
+                        Тариф (срок)
+                      </label>
+                      <select
+                        id="sub-duration"
+                        value={subscriptionEdit.durationId}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, durationId: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      >
+                        <option value="">—</option>
+                        {durations.map((d) => (
+                          <option key={d._id} value={d._id}>
+                            {d.name} ({d.months} мес.)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="sub-premium" className="block text-sm font-medium mb-2">
+                        Уровень премиальности
+                      </label>
+                      <select
+                        id="sub-premium"
+                        value={subscriptionEdit.premiumLevelId}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, premiumLevelId: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      >
+                        <option value="">—</option>
+                        {premiumLevels.map((pl) => (
+                          <option key={pl._id} value={pl._id}>
+                            {pl.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="sub-phone" className="block text-sm font-medium mb-2">
+                        Телефон
+                      </label>
+                      <input
+                        id="sub-phone"
+                        type="text"
+                        value={subscriptionEdit.phone}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, phone: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="sub-city" className="block text-sm font-medium mb-2">
+                        Город
+                      </label>
+                      <input
+                        id="sub-city"
+                        type="text"
+                        value={subscriptionEdit.city}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, city: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="sub-street" className="block text-sm font-medium mb-2">
+                        Улица
+                      </label>
+                      <input
+                        id="sub-street"
+                        type="text"
+                        value={subscriptionEdit.street}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, street: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="sub-house" className="block text-sm font-medium mb-2">
+                        Дом
+                      </label>
+                      <input
+                        id="sub-house"
+                        type="text"
+                        value={subscriptionEdit.house}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, house: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="sub-apartment" className="block text-sm font-medium mb-2">
+                        Квартира
+                      </label>
+                      <input
+                        id="sub-apartment"
+                        type="text"
+                        value={subscriptionEdit.apartment}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, apartment: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="sub-deliveryDate" className="block text-sm font-medium mb-2">
+                        Дата доставки
+                      </label>
+                      <input
+                        id="sub-deliveryDate"
+                        type="date"
+                        value={subscriptionEdit.deliveryDate}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, deliveryDate: e.target.value })
+                        }
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="sub-deliveryTime" className="block text-sm font-medium mb-2">
+                        Время доставки
+                      </label>
+                      <input
+                        id="sub-deliveryTime"
+                        type="text"
+                        value={subscriptionEdit.deliveryTime}
+                        onChange={(e) =>
+                          setSubscriptionEdit({ ...subscriptionEdit, deliveryTime: e.target.value })
+                        }
+                        placeholder="Напр. 09:00–12:00"
+                        className={cn(
+                          "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]"
+                        )}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-[var(--foreground)]/60">У клиента нет активной подписки.</p>
+              )}
             </div>
           )}
 

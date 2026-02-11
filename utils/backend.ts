@@ -40,10 +40,11 @@ export async function fetchWithAuth(
   options: RequestInit = {}
 ): Promise<Response> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
     if (token) {
