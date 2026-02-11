@@ -16,6 +16,19 @@ interface Subscription {
   phone: string;
 }
 
+export interface QuestionnaireData {
+  allergies?: string;
+  dietaryRestrictions: string[];
+  dietaryRestrictionsOther?: string;
+  physicalLimitations: string[];
+  physicalLimitationsOther?: string;
+  fears: string[];
+  fearsOther?: string;
+  timePreference: string[];
+  dayPreference: string[];
+  additionalInfo?: string;
+}
+
 interface UserProfile {
   id: string;
   email: string;
@@ -25,6 +38,8 @@ interface UserProfile {
   phone?: string;
   avatar?: string;
   lastLogin?: Date;
+  questionnaireCompleted?: boolean;
+  questionnaire?: QuestionnaireData | null;
 }
 
 interface CabinetState {
@@ -60,15 +75,18 @@ export const useCabinetStore = create<CabinetState>()(
         set({ isFetchingProfile: true, fetchProfileError: false });
         try {
           const response = await api.get<UserProfile>("/users/profile");
+          const data = response.data;
           const userData: UserProfile = {
-            id: response.data.id ?? (response.data as any)._id ?? "",
-            email: response.data.email ?? "",
-            name: response.data.name ?? "",
-            role: response.data.role ?? "",
-            emailVerified: response.data.emailVerified ?? false,
-            phone: response.data.phone,
-            avatar: response.data.avatar,
-            lastLogin: response.data.lastLogin,
+            id: data.id ?? (data as { _id?: string })._id ?? "",
+            email: data.email ?? "",
+            name: data.name ?? "",
+            role: data.role ?? "",
+            emailVerified: data.emailVerified ?? false,
+            phone: data.phone,
+            avatar: data.avatar,
+            lastLogin: data.lastLogin,
+            questionnaireCompleted: data.questionnaireCompleted ?? false,
+            questionnaire: data.questionnaire ?? null,
           };
           set({ userData, isFetchingProfile: false, fetchProfileError: false });
         } catch (error) {

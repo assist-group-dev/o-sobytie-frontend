@@ -1,54 +1,113 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/ui/components/Card";
+import { Button } from "@/ui/components/Button";
 import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface MaintenanceSettings {
   enabled: boolean;
   message: string;
 }
 
-const defaultSettings: MaintenanceSettings = {
-  enabled: false,
-  message: "Сайт временно закрыт на техническое обслуживание. Мы вернемся в ближайшее время.",
-};
+const DEFAULT_MESSAGE =
+  "Сайт временно закрыт на техническое обслуживание. Мы вернемся в ближайшее время.";
 
 export default function GeneralPage() {
   const addToast = useToastStore((state) => state.addToast);
-  const [settings, setSettings] = useState<MaintenanceSettings>(defaultSettings);
+  const [settings, setSettings] = useState<MaintenanceSettings>({
+    enabled: false,
+    message: DEFAULT_MESSAGE,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/settings`);
+        if (response.ok) {
+          const data = (await response.json()) as { maintenance: { enabled: boolean; message: string } };
+          setSettings({
+            enabled: data.maintenance.enabled,
+            message: data.maintenance.message ?? DEFAULT_MESSAGE,
+          });
+        }
+      } catch {
+        addToast({ type: "error", message: "Ошибка загрузки настроек" });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [addToast]);
+
+  const patchSettings = async (payload: { enabled?: boolean; message?: string }) => {
+    setIsSaving(true);
+    try {
+      const body = {
+        maintenance: {
+          ...(payload.enabled !== undefined && { enabled: payload.enabled }),
+          ...(payload.message !== undefined && { message: payload.message }),
+        },
+      };
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error("Failed to update");
+      const data = (await response.json()) as { maintenance: { enabled: boolean; message: string } };
+      setSettings({
+        enabled: data.maintenance.enabled,
+        message: data.maintenance.message ?? DEFAULT_MESSAGE,
+      });
+      return true;
+    } catch {
+      addToast({ type: "error", message: "Ошибка сохранения настроек" });
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleMaintenanceToggle = () => {
     if (!settings.enabled) {
-      // Включение - показываем подтверждение
       setIsConfirmOpen(true);
     } else {
-      // Выключение - сразу применяем
-      setSettings((prev) => ({
-        ...prev,
-        enabled: false,
-      }));
-      addToast({
-        type: "success",
-        message: "Сайт открыт",
+      patchSettings({ enabled: false, message: settings.message }).then((ok) => {
+        if (ok) addToast({ type: "success", message: "Сайт открыт" });
       });
     }
   };
 
   const handleConfirmEnable = () => {
-    setSettings((prev) => ({
-      ...prev,
-      enabled: true,
-    }));
     setIsConfirmOpen(false);
-    addToast({
-      type: "success",
-      message: "Сайт закрыт на обслуживание",
+    patchSettings({ enabled: true, message: settings.message }).then((ok) => {
+      if (ok) addToast({ type: "success", message: "Сайт закрыт на обслуживание" });
     });
   };
+
+  const handleSaveMessage = () => {
+    patchSettings({ enabled: settings.enabled, message: settings.message }).then((ok) => {
+      if (ok) addToast({ type: "success", message: "Сообщение сохранено" });
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold uppercase mb-2">Общие настройки</h1>
+        <Card className="p-6">
+          <p className="text-[var(--foreground)]/60">Загрузка…</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -70,6 +129,7 @@ export default function GeneralPage() {
             </div>
             <button
               onClick={handleMaintenanceToggle}
+              disabled={isSaving}
               className={cn(
                 "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
                 settings.enabled
@@ -98,6 +158,7 @@ export default function GeneralPage() {
                 }))
               }
               rows={3}
+              disabled={isSaving}
               className={cn(
                 "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
                 "bg-[var(--background)] text-[var(--foreground)]",
@@ -105,6 +166,14 @@ export default function GeneralPage() {
               )}
               placeholder="Введите текст сообщения, которое увидят пользователи при закрытии сайта на обслуживание"
             />
+            <Button
+              type="button"
+              onClick={handleSaveMessage}
+              disabled={isSaving}
+              className="mt-2"
+            >
+              Сохранить сообщение
+            </Button>
           </div>
         </div>
       </Card>

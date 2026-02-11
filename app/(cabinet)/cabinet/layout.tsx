@@ -57,7 +57,6 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
 
   const handlePromoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Promo code:", promoCode);
   };
 
   return (

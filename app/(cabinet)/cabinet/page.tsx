@@ -16,13 +16,13 @@ import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 export default function CabinetPage() {
   const router = useRouter();
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
-  const [isQuestionnaireCompleted, setIsQuestionnaireCompleted] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
-  const { subscription, userData, fetchProfile } = useCabinetStore();
+  const { subscription, userData, fetchProfile, setUserData } = useCabinetStore();
   const { logout } = useAppStore();
 
   const { isFetchingProfile, fetchProfileError } = useCabinetStore();
+  const questionnaireCompleted = userData?.questionnaireCompleted ?? false;
 
   useEffect(() => {
     if (!userData && !isFetchingProfile && !fetchProfileError) {
@@ -64,7 +64,9 @@ export default function CabinetPage() {
   const { addToast } = useToastStore();
 
   const handleQuestionnaireComplete = () => {
-    setIsQuestionnaireCompleted(true);
+    if (userData) {
+      setUserData({ ...userData, questionnaireCompleted: true });
+    }
     setIsQuestionnaireOpen(false);
     addToast({
       type: "success",
@@ -164,7 +166,7 @@ export default function CabinetPage() {
           </div>
         )}
 
-        {!isQuestionnaireCompleted && (
+        {!questionnaireCompleted && (
           <div className="p-3 sm:p-4 lg:p-6 -mt-2 sm:-mt-4 lg:-mt-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
             <button
               onClick={() => setIsQuestionnaireOpen(true)}
@@ -193,7 +195,7 @@ export default function CabinetPage() {
       <SubscriptionModal
         isOpen={isSubscriptionModalOpen}
         onClose={() => setIsSubscriptionModalOpen(false)}
-        isQuestionnaireCompleted={isQuestionnaireCompleted}
+        isQuestionnaireCompleted={questionnaireCompleted}
         onOpenQuestionnaire={() => {
           setIsSubscriptionModalOpen(false);
           setIsQuestionnaireOpen(true);

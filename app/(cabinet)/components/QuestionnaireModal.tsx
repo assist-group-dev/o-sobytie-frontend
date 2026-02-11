@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
+import { api } from "@/utils/api";
 
 interface QuestionnaireModalProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ interface QuestionnaireModalProps {
 
 export function QuestionnaireModal({ isOpen, onClose, onComplete }: QuestionnaireModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     allergies: "",
     dietaryRestrictions: [] as string[],
@@ -167,27 +170,50 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Questionnaire submitted:", formData);
-    onComplete();
-    onClose();
-    setCurrentStep(0);
-    setFormData({
-      allergies: "",
-      dietaryRestrictions: [],
-      dietaryRestrictionsOther: "",
-      physicalLimitations: [],
-      physicalLimitationsOther: "",
-      fears: [],
-      fearsOther: "",
-      fitnessLevel: "",
-      activityPreference: "",
-      activityTypes: [],
-      medicalContraindications: "",
-      timePreference: [],
-      dayPreference: [],
-      additionalInfo: "",
-    });
+  const handleSubmit = async () => {
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      await api.post("/users/questionnaire", {
+        allergies: formData.allergies,
+        dietaryRestrictions: formData.dietaryRestrictions,
+        dietaryRestrictionsOther: formData.dietaryRestrictionsOther,
+        physicalLimitations: formData.physicalLimitations,
+        physicalLimitationsOther: formData.physicalLimitationsOther,
+        fears: formData.fears,
+        fearsOther: formData.fearsOther,
+        timePreference: formData.timePreference,
+        dayPreference: formData.dayPreference,
+        additionalInfo: formData.additionalInfo,
+      });
+      onComplete();
+      onClose();
+      setCurrentStep(0);
+      setFormData({
+        allergies: "",
+        dietaryRestrictions: [],
+        dietaryRestrictionsOther: "",
+        physicalLimitations: [],
+        physicalLimitationsOther: "",
+        fears: [],
+        fearsOther: "",
+        fitnessLevel: "",
+        activityPreference: "",
+        activityTypes: [],
+        medicalContraindications: "",
+        timePreference: [],
+        dayPreference: [],
+        additionalInfo: "",
+      });
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "message" in err && typeof (err as { message: unknown }).message === "string"
+          ? (err as { message: string }).message
+          : "Не удалось отправить анкету";
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isStepValid = () => {
@@ -351,12 +377,17 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
           </div>
         </div>
 
+        {submitError && (
+          <p className="text-sm text-red-600 dark:text-red-400 mb-4">{submitError}</p>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
           {currentStep > 0 && (
             <Button
               variant="outline"
               size="lg"
               onClick={handlePrev}
+              disabled={isSubmitting}
               className="uppercase tracking-wider w-full sm:w-auto order-2 sm:order-1"
             >
               Назад
@@ -367,9 +398,10 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
             <Button
               size="lg"
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
-              Завершить анкетирование
+              {isSubmitting ? "Отправка..." : "Завершить анкетирование"}
             </Button>
           ) : (
             <Button

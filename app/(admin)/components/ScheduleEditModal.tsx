@@ -31,6 +31,7 @@ interface ScheduleEditModalProps {
   clients: Client[];
   counterparties: Counterparty[];
   onSave: (event: ScheduleEvent) => void;
+  onDelete?: () => void;
 }
 
 export function ScheduleEditModal({
@@ -40,6 +41,7 @@ export function ScheduleEditModal({
   clients,
   counterparties,
   onSave,
+  onDelete,
 }: ScheduleEditModalProps) {
   const [formData, setFormData] = useState<ScheduleEvent>(event);
 
@@ -166,6 +168,16 @@ export function ScheduleEditModal({
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            {onDelete != null && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onDelete}
+                className="flex-1 border-red-500 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50"
+              >
+                Удалить
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Отмена
             </Button>

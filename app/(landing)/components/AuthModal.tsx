@@ -104,24 +104,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
       const data = await response.json();
 
-      console.log("=== LOGIN RESPONSE ===");
-      console.log("Full response data:", data);
-      console.log("User data:", data.user);
-      console.log("User role:", data.user?.role);
-      console.log("Access token present:", !!data.accessToken);
-      console.log("Response headers:", {
-        setCookie: response.headers.get("set-cookie"),
-        cookies: document.cookie,
-      });
-      console.log("=====================");
-
       if (!response.ok) {
         throw new Error(data.message ?? "Ошибка входа");
       }
 
       if (data.accessToken) {
         localStorage.setItem("access_token", data.accessToken);
-        console.log("Access token saved to localStorage");
       }
 
       setAuth({
@@ -130,8 +118,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         name: data.user.name,
         role: data.user.role,
       });
-
-      console.log("Auth state set with role:", data.user.role);
 
       useCabinetStore.getState().setUserData({
         id: data.user.id,
@@ -433,16 +419,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
         const loginData = await loginResponse.json();
 
-        console.log("=== AUTO-LOGIN RESPONSE ===");
-        console.log("Full response data:", loginData);
-        console.log("User data:", loginData.user);
-        console.log("Access token present:", !!loginData.accessToken);
-        console.log("=====================");
-
         if (loginResponse.ok && loginData.user) {
           if (loginData.accessToken) {
             localStorage.setItem("access_token", loginData.accessToken);
-            console.log("Access token saved to localStorage");
           }
 
           setAuth({
@@ -466,7 +445,6 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           throw new Error(loginData.message ?? "Ошибка автологина");
         }
       } catch (loginErr) {
-        console.error("Auto-login failed:", loginErr);
         setError(loginErr instanceof Error ? loginErr.message : "Ошибка автологина");
         throw loginErr;
       }

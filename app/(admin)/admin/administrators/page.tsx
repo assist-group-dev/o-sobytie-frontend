@@ -15,6 +15,19 @@ import { cn } from "@/utils/cn";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 import { CreateAdministratorModal } from "@/app/(admin)/components/CreateAdministratorModal";
 
+interface QuestionnaireData {
+  allergies?: string;
+  dietaryRestrictions: string[];
+  dietaryRestrictionsOther?: string;
+  physicalLimitations: string[];
+  physicalLimitationsOther?: string;
+  fears: string[];
+  fearsOther?: string;
+  timePreference: string[];
+  dayPreference: string[];
+  additionalInfo?: string;
+}
+
 interface Administrator {
   id: string;
   name: string;
@@ -27,6 +40,8 @@ interface Administrator {
   lastLogin?: Date;
   createdAt: string;
   updatedAt: string;
+  questionnaireCompleted?: boolean;
+  questionnaire?: QuestionnaireData | null;
 }
 
 export default function AdministratorsPage() {
@@ -104,12 +119,80 @@ export default function AdministratorsPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSave = (data: Partial<Administrator>) => {
-    if (selectedAdministrator) {
+  const handleSave = async (data: Partial<Administrator>) => {
+    if (!selectedAdministrator) return;
+    const hasPersistableUpdate =
+      data.name !== undefined ||
+      data.phone !== undefined ||
+      data.questionnaire !== undefined ||
+      data.questionnaireCompleted !== undefined;
+    if (hasPersistableUpdate) {
+      try {
+        const body: {
+          name?: string;
+          phone?: string | null;
+          questionnaire?: QuestionnaireData;
+          questionnaireCompleted?: boolean;
+        } = {};
+        if (data.name !== undefined) body.name = data.name;
+        if (data.phone !== undefined) body.phone = data.phone;
+        if (data.questionnaire != null) body.questionnaire = data.questionnaire;
+        if (data.questionnaireCompleted !== undefined) body.questionnaireCompleted = data.questionnaireCompleted;
+        const response = await fetchWithAuth(
+          `${API_BASE_URL}/admin/clients/${selectedAdministrator.id}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to update administrator");
+        }
+        const updated = (await response.json()) as Administrator;
+        setAdministrators(
+          administrators.map((item) =>
+            item.id === selectedAdministrator.id
+              ? {
+                  ...item,
+                  name: updated.name,
+                  phone: updated.phone,
+                  questionnaire: updated.questionnaire ?? item.questionnaire,
+                  questionnaireCompleted: updated.questionnaireCompleted ?? false,
+                }
+              : item
+          )
+        );
+        setSelectedAdministrator((prev) =>
+          prev?.id === selectedAdministrator.id
+            ? {
+                ...prev,
+                name: updated.name,
+                phone: updated.phone,
+                questionnaire: updated.questionnaire ?? prev.questionnaire,
+                questionnaireCompleted: updated.questionnaireCompleted ?? false,
+              }
+            : prev
+        );
+        addToast({
+          type: "success",
+          message: `Администратор "${selectedAdministrator.name}" успешно отредактирован`,
+        });
+      } catch (error) {
+        console.error("Error updating administrator:", error);
+        addToast({
+          type: "error",
+          message: "Ошибка сохранения данных администратора",
+        });
+      }
+    } else {
       setAdministrators(
         administrators.map((item) =>
           item.id === selectedAdministrator.id ? { ...item, ...data } : item
         )
+      );
+      setSelectedAdministrator((prev) =>
+        prev?.id === selectedAdministrator.id ? (prev ? { ...prev, ...data } : null) : prev
       );
       addToast({
         type: "success",

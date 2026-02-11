@@ -44,6 +44,7 @@ interface Client {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   eventDate?: string;
   questionnaireCompleted?: boolean;
   subscriptionActive?: boolean;
@@ -76,15 +77,28 @@ export default function ClientsPage() {
           throw new Error("Failed to fetch clients");
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as Array<{
+          id: string;
+          name: string;
+          email: string;
+          banned?: boolean;
+          questionnaireCompleted?: boolean;
+          questionnaire?: QuestionnaireData;
+          eventDate?: string;
+          subscriptionActive?: boolean;
+          subscription?: SubscriptionData;
+        }>;
         setClients(
-          data.map((client: any) => ({
+          data.map((client) => ({
             id: client.id,
             name: client.name,
             email: client.email,
             banned: client.banned ?? false,
-            questionnaireCompleted: Math.random() > 0.5,
-            subscriptionActive: Math.random() > 0.5,
+            questionnaireCompleted: client.questionnaireCompleted ?? false,
+            questionnaire: client.questionnaire,
+            eventDate: client.eventDate,
+            subscriptionActive: client.subscriptionActive,
+            subscription: client.subscription,
           }))
         );
       } catch (error) {
@@ -136,8 +150,70 @@ export default function ClientsPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSave = (data: Partial<Client>) => {
-    if (selectedClient) {
+  const handleSave = async (data: Partial<Client>) => {
+    if (!selectedClient) return;
+    const hasPersistableUpdate =
+      data.name !== undefined ||
+      data.phone !== undefined ||
+      data.questionnaire !== undefined ||
+      data.questionnaireCompleted !== undefined;
+    if (hasPersistableUpdate) {
+      try {
+        const body: {
+          name?: string;
+          phone?: string | null;
+          questionnaire?: QuestionnaireData;
+          questionnaireCompleted?: boolean;
+        } = {};
+        if (data.name !== undefined) body.name = data.name;
+        if (data.phone !== undefined) body.phone = data.phone;
+        if (data.questionnaire !== undefined) body.questionnaire = data.questionnaire;
+        if (data.questionnaireCompleted !== undefined) body.questionnaireCompleted = data.questionnaireCompleted;
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients/${selectedClient.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to update client");
+        }
+        const updated = (await response.json()) as Client;
+        setClients(
+          clients.map((item) =>
+            item.id === selectedClient.id
+              ? {
+                  ...item,
+                  name: updated.name,
+                  phone: updated.phone,
+                  questionnaire: updated.questionnaire,
+                  questionnaireCompleted: updated.questionnaireCompleted ?? false,
+                }
+              : item
+          )
+        );
+        setSelectedClient((prev) =>
+          prev?.id === selectedClient.id
+            ? {
+                ...prev,
+                name: updated.name,
+                phone: updated.phone,
+                questionnaire: updated.questionnaire,
+                questionnaireCompleted: updated.questionnaireCompleted ?? false,
+              }
+            : prev
+        );
+        addToast({
+          type: "success",
+          message: `Клиент "${selectedClient.name}" успешно отредактирован`,
+        });
+      } catch (error) {
+        console.error("Error updating client:", error);
+        addToast({
+          type: "error",
+          message: "Ошибка сохранения данных клиента",
+        });
+      }
+    } else {
       setClients(
         clients.map((item) =>
           item.id === selectedClient.id ? { ...item, ...data } : item

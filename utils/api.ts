@@ -35,25 +35,19 @@ api.interceptors.response.use(
       const data = error.response.data as { message?: string; errors?: unknown };
 
       if (status === 401) {
-        console.error("Unauthorized");
         if (typeof window !== "undefined") {
           const pathname = window.location.pathname;
           if (pathname.startsWith("/admin")) {
-            console.log("[API Interceptor] 401 on admin route, redirecting to /");
             window.location.href = "/";
           }
         }
       } else if (status === 403) {
-        console.error("Forbidden");
         if (typeof window !== "undefined") {
           const pathname = window.location.pathname;
           if (pathname.startsWith("/admin")) {
-            console.log("[API Interceptor] 403 on admin route, redirecting to /");
             window.location.href = "/";
           }
         }
-      } else if (status >= 500) {
-        console.error("Server error");
       }
 
       return Promise.reject({

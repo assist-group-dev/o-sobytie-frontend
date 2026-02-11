@@ -14,24 +14,50 @@ const getApiBaseUrl = (): string => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+const MAINTENANCE_CACHE_TTL_MS = 60 * 1000;
 
-async function verifyToken(token: string, isFromCookie: boolean): Promise<{ valid: boolean; role?: string }> {
+let maintenanceCache: {
+  data: { enabled: boolean; message: string } | null;
+  timestamp: number;
+} = { data: null, timestamp: 0 };
+
+async function getMaintenanceState(): Promise<{ enabled: boolean; message: string }> {
+  const now = Date.now();
+  if (
+    maintenanceCache.data != null &&
+    now - maintenanceCache.timestamp < MAINTENANCE_CACHE_TTL_MS
+  ) {
+    return maintenanceCache.data;
+  }
+  try {
+    const response = await fetch(`${API_BASE_URL}/settings/maintenance`, {
+      credentials: "include",
+    });
+    if (response.ok) {
+      const data = (await response.json()) as { enabled: boolean; message: string };
+      maintenanceCache = { data, timestamp: now };
+      return data;
+    }
+  } catch {
+    // treat as disabled on error
+  }
+  maintenanceCache = { data: { enabled: false, message: "" }, timestamp: now };
+  return { enabled: false, message: "" };
+}
+
+async function verifyToken(
+  token: string,
+  isFromCookie: boolean
+): Promise<{ valid: boolean; role?: string }> {
   try {
     const headers: Record<string, string> = {};
-    
+
     if (isFromCookie) {
       headers.Cookie = `access_token=${token}`;
     } else {
       headers.Authorization = `Bearer ${token}`;
     }
-    
-    console.log("[Middleware] Verifying token:", {
-      isFromCookie,
-      hasToken: !!token,
-      apiUrl: `${API_BASE_URL}/users/profile`,
-      headers: Object.keys(headers),
-    });
-    
+
     const response = await fetch(`${API_BASE_URL}/users/profile`, {
       method: "GET",
       headers,
@@ -40,22 +66,11 @@ async function verifyToken(token: string, isFromCookie: boolean): Promise<{ vali
 
     if (response.ok) {
       const data = await response.json();
-      console.log("[Middleware] Profile response:", {
-        valid: true,
-        role: data.role,
-        userId: data.id || data._id,
-        email: data.email,
-      });
       return { valid: true, role: data.role };
     }
-    
-    console.log("[Middleware] Profile response failed:", {
-      status: response.status,
-      statusText: response.statusText,
-    });
+
     return { valid: false };
-  } catch (error) {
-    console.error("[Middleware] Verify token error:", error);
+  } catch {
     return { valid: false };
   }
 }
@@ -68,32 +83,25 @@ export async function middleware(request: NextRequest) {
   const accessToken = cookieToken ?? headerToken;
   const isFromCookie = !!cookieToken;
 
+  if (pathname === "/maintenance") {
+    const maintenance = await getMaintenanceState();
+    if (!maintenance.enabled) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin")) {
-    console.log("[Middleware] Admin route access attempt:", {
-      pathname,
-      hasCookieToken: !!cookieToken,
-      hasHeaderToken: !!headerToken,
-      hasAccessToken: !!accessToken,
-    });
-    
     if (!accessToken) {
-      console.log("[Middleware] No access token in cookie/header, allowing client-side check");
       return NextResponse.next();
     }
 
     const verification = await verifyToken(accessToken, isFromCookie);
-    console.log("[Middleware] Verification result:", {
-      valid: verification.valid,
-      role: verification.role,
-      isAdmin: verification.role === "admin",
-    });
-    
+
     if (!verification.valid || verification.role !== "admin") {
-      console.log("[Middleware] Access denied, redirecting to /");
       return NextResponse.redirect(new URL("/", request.url));
     }
-    
-    console.log("[Middleware] Access granted to /admin");
+    return NextResponse.next();
   }
 
   if (pathname.startsWith("/cabinet")) {
@@ -104,6 +112,17 @@ export async function middleware(request: NextRequest) {
     const verification = await verifyToken(accessToken, isFromCookie);
     if (!verification.valid) {
       return NextResponse.next();
+    }
+    return NextResponse.next();
+  }
+
+  const maintenance = await getMaintenanceState();
+  if (maintenance.enabled) {
+    const isAdmin =
+      accessToken != null &&
+      (await verifyToken(accessToken, isFromCookie)).role === "admin";
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/maintenance", request.url));
     }
   }
 

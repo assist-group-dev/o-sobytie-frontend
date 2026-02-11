@@ -375,7 +375,6 @@ export function SubscriptionCards() {
             price: purchaseTariff.price,
           }}
           onComplete={(data: SubscriptionFormData) => {
-            console.log("Subscription purchase completed:", data);
             const { setSubscription } = useCabinetStore.getState();
             const deliveryDateObj = new Date(data.deliveryDate);
             const deliveryDateFormatted = deliveryDateObj.toLocaleDateString("ru-RU", {

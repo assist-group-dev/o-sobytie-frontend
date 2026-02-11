@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Eye, Edit, Plus } from "lucide-react";
 import { Card } from "@/ui/components/Card";
 import { Button } from "@/ui/components/Button";
@@ -11,91 +11,140 @@ import { ScheduleEditModal } from "@/app/(admin)/components/ScheduleEditModal";
 import { ScheduleCreateModal } from "@/app/(admin)/components/ScheduleCreateModal";
 import { ClientDetailModal } from "@/app/(admin)/components/ClientDetailModal";
 import { CounterpartyDetailModal } from "@/app/(admin)/components/CounterpartyDetailModal";
+import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
-import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
-import scheduleData from "@/app/(admin)/data/schedule.json";
-import clientsData from "@/app/(admin)/data/clients.json";
-import counterpartiesData from "@/app/(admin)/data/counterparties.json";
-
-interface ScheduleEvent {
+interface ScheduleEventItem {
   id: string;
-  clientId: string;
+  userId: string;
   counterpartyId: string;
-  date: string;
-  time: string;
-  amount: string;
+  dateTime: string;
+  amount: number;
+  clientName: string;
+  counterpartyName: string;
+  eventName: string;
 }
 
-interface Client {
+interface ClientForSchedule {
   id: string;
   name: string;
-  email: string;
-  eventDate: string;
-  questionnaireCompleted: boolean;
-  subscriptionActive: boolean;
-  questionnaire: any;
-  subscription: any;
+  email?: string;
+  role?: string;
 }
 
-interface Counterparty {
+interface CounterpartyForSchedule {
   id: string;
   name: string;
+  event?: string;
   address?: string;
   phone?: string;
   contactPerson?: string;
   description?: string;
-  event?: string;
 }
-
-const mockSchedule: ScheduleEvent[] = scheduleData as ScheduleEvent[];
-const clients: Client[] = clientsData as Client[];
-const counterparties: Counterparty[] = counterpartiesData as Counterparty[];
 
 export default function SchedulePage() {
   const addToast = useToastStore((state) => state.addToast);
-  const [schedule, setSchedule] = useState<ScheduleEvent[]>(mockSchedule);
+  const [schedule, setSchedule] = useState<ScheduleEventItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  const [sortBy, setSortBy] = useState("dateTime");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [clients, setClients] = useState<ClientForSchedule[]>([]);
+  const [counterparties, setCounterparties] = useState<CounterpartyForSchedule[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEventItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<ClientForSchedule | null>(null);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
-  const [selectedCounterparty, setSelectedCounterparty] = useState<Counterparty | null>(null);
+  const [selectedCounterparty, setSelectedCounterparty] = useState<CounterpartyForSchedule | null>(null);
   const [isCounterpartyModalOpen, setIsCounterpartyModalOpen] = useState(false);
 
-  const getClientById = (id: string) => clients.find((c) => c.id === id);
-  const getCounterpartyById = (id: string) => counterparties.find((cp) => cp.id === id);
+  const fetchEvents = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(itemsPerPage),
+        sortBy,
+        sortOrder,
+      });
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/schedule/events?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch events");
+      const data = await response.json();
+      setSchedule(data.items ?? []);
+      setTotal(data.total ?? 0);
+    } catch (error) {
+      console.error("Error fetching schedule:", error);
+      addToast({ type: "error", message: "Ошибка загрузки расписания" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, itemsPerPage, sortBy, sortOrder, addToast]);
 
-  const sortedData = useMemo(() => {
-    const dataWithSortValues = schedule.map((item) => {
-      const client = getClientById(item.clientId);
-      const counterparty = getCounterpartyById(item.counterpartyId);
-      return {
-        ...item,
-        _clientName: client?.name || "",
-        _eventName: counterparty?.event || "Не указано",
-      };
-    });
-    return sortData(dataWithSortValues, sortKey, sortDirection);
-  }, [schedule, sortKey, sortDirection]);
+  const fetchClients = useCallback(async () => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients`);
+      if (!response.ok) return;
+      const data = await response.json();
+      const onlyUsers = (
+        data as { id: string; name: string; email?: string; role?: string }[]
+      ).filter((c) => c.role === "user");
+      setClients(
+        onlyUsers.map((c) => ({ id: c.id, name: c.name, email: c.email ?? "" }))
+      );
+    } catch {
+      setClients([]);
+    }
+  }, []);
 
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return sortedData.slice(startIndex, endIndex);
-  }, [currentPage, itemsPerPage, sortedData]);
+  const fetchCounterparties = useCallback(async () => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setCounterparties(
+        (data as CounterpartyForSchedule[]).map((c) => ({
+          id: c.id,
+          name: c.name,
+          event: c.event,
+          address: c.address,
+          phone: c.phone,
+          contactPerson: c.contactPerson,
+          description: c.description,
+        }))
+      );
+    } catch {
+      setCounterparties([]);
+    }
+  }, []);
 
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    fetchClients();
+    fetchCounterparties();
+  }, [fetchClients, fetchCounterparties]);
+
+  const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
 
   const handleSort = (key: string, direction: "asc" | "desc") => {
-    setSortKey(key);
-    setSortDirection(direction);
+    const map: Record<string, string> = {
+      _clientName: "dateTime",
+      _eventName: "dateTime",
+      date: "dateTime",
+      time: "dateTime",
+      amount: "amount",
+    };
+    setSortBy(map[key] ?? "dateTime");
+    setSortOrder(direction);
     setCurrentPage(1);
   };
 
@@ -104,41 +153,109 @@ export default function SchedulePage() {
     setCurrentPage(1);
   };
 
-  const handleView = (event: ScheduleEvent) => {
+  const handleView = (event: ScheduleEventItem) => {
     setSelectedEvent(event);
     setIsDetailModalOpen(true);
   };
 
-  const handleEdit = (event: ScheduleEvent) => {
+  const handleEdit = (event: ScheduleEventItem) => {
     setSelectedEvent(event);
     setIsEditModalOpen(true);
   };
 
-  const handleSave = (updatedEvent: ScheduleEvent) => {
-    setSchedule(schedule.map((item) => (item.id === updatedEvent.id ? updatedEvent : item)));
-    setIsEditModalOpen(false);
-    setSelectedEvent(null);
-    addToast({
-      type: "success",
-      message: "Мероприятие успешно обновлено",
-    });
+  const handleSave = async (updated: {
+    id: string;
+    clientId: string;
+    counterpartyId: string;
+    date: string;
+    time: string;
+    amount: string;
+  }) => {
+    if (!selectedEvent) return;
+    try {
+      const dateTime = new Date(`${updated.date}T${updated.time}`).toISOString();
+      const response = await fetchWithAuth(
+        `${API_BASE_URL}/admin/schedule/events/${selectedEvent.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: updated.clientId,
+            counterpartyId: updated.counterpartyId,
+            dateTime,
+            amount: Number(updated.amount),
+          }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update");
+      const saved = (await response.json()) as ScheduleEventItem;
+      setSchedule((prev) => prev.map((e) => (e.id === saved.id ? saved : e)));
+      setSelectedEvent(saved);
+      addToast({ type: "success", message: "Мероприятие успешно обновлено" });
+    } catch (error) {
+      console.error("Error updating event:", error);
+      addToast({ type: "error", message: "Ошибка сохранения мероприятия" });
+    }
   };
 
-  const handleCreate = (newEvent: Omit<ScheduleEvent, "id">) => {
-    const createdEvent: ScheduleEvent = {
-      ...newEvent,
-      id: String(schedule.length + 1),
-    };
-    setSchedule([...schedule, createdEvent]);
-    addToast({
-      type: "success",
-      message: "Мероприятие успешно создано",
-    });
+  const handleCreate = async (newEvent: {
+    clientId: string;
+    counterpartyId: string;
+    date: string;
+    time: string;
+    amount: string;
+  }) => {
+    try {
+      const dateTime = new Date(`${newEvent.date}T${newEvent.time}`).toISOString();
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/schedule/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: newEvent.clientId,
+          counterpartyId: newEvent.counterpartyId,
+          dateTime,
+          amount: Number(newEvent.amount),
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to create");
+      const created = (await response.json()) as ScheduleEventItem;
+      setSchedule((prev) => [created, ...prev]);
+      setTotal((t) => t + 1);
+      setIsCreateModalOpen(false);
+      addToast({ type: "success", message: "Мероприятие успешно создано" });
+    } catch (error) {
+      console.error("Error creating event:", error);
+      addToast({ type: "error", message: "Ошибка создания мероприятия" });
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedEvent) return;
+    try {
+      const response = await fetchWithAuth(
+        `${API_BASE_URL}/admin/schedule/events/${selectedEvent.id}`,
+        { method: "DELETE" }
+      );
+      if (!response.ok) throw new Error("Failed to delete");
+      setSchedule((prev) => prev.filter((e) => e.id !== selectedEvent.id));
+      setTotal((t) => Math.max(0, t - 1));
+      setIsEditModalOpen(false);
+      setIsDeleteConfirmOpen(false);
+      setSelectedEvent(null);
+      addToast({ type: "success", message: "Мероприятие удалено" });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      addToast({ type: "error", message: "Ошибка удаления мероприятия" });
+    }
   };
 
   const handleClientClick = (e: React.MouseEvent, clientId: string) => {
     e.stopPropagation();
-    const client = clients.find((c) => c.id === clientId);
+    const client = clients.find((c) => c.id === clientId) ?? null;
     if (client) {
       setSelectedClient(client);
       setIsClientModalOpen(true);
@@ -147,95 +264,100 @@ export default function SchedulePage() {
 
   const handleCounterpartyClick = (e: React.MouseEvent, counterpartyId: string) => {
     e.stopPropagation();
-    const counterparty = counterparties.find((cp) => cp.id === counterpartyId);
-    if (counterparty) {
-      setSelectedCounterparty(counterparty);
+    const cp = counterparties.find((c) => c.id === counterpartyId) ?? null;
+    if (cp) {
+      setSelectedCounterparty(cp);
       setIsCounterpartyModalOpen(true);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ru-RU", {
+  const formatDate = (dateTimeIso: string) => {
+    return new Date(dateTimeIso).toLocaleDateString("ru-RU", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
   };
 
-  const formatAmount = (amount: string) => {
-    return `${parseInt(amount).toLocaleString("ru-RU")} ₽`;
+  const formatTime = (dateTimeIso: string) => {
+    return new Date(dateTimeIso).toTimeString().slice(0, 5);
   };
+
+  const formatAmount = (amount: number) => {
+    return `${amount.toLocaleString("ru-RU")} ₽`;
+  };
+
+  const eventToEditShape = (e: ScheduleEventItem) => ({
+    id: e.id,
+    clientId: e.userId,
+    counterpartyId: e.counterpartyId,
+    date: e.dateTime.slice(0, 10),
+    time: e.dateTime.slice(11, 16),
+    amount: String(e.amount),
+  });
 
   const columns = [
     {
-      key: "_clientName",
+      key: "clientName",
       label: "Клиент",
       sortable: true,
-      render: (item: ScheduleEvent) => {
-        const client = getClientById(item.clientId);
-        if (!client) return <span className="text-[var(--foreground)]/50">Не найден</span>;
-        return (
-          <button
-            onClick={(e) => handleClientClick(e, item.clientId)}
-            className={cn(
-              "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
-              "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
-              "hover:bg-blue-200 dark:hover:bg-blue-800"
-            )}
-          >
-            {client.name}
-          </button>
-        );
-      },
+      render: (item: ScheduleEventItem) => (
+        <button
+          onClick={(e) => handleClientClick(e, item.userId)}
+          className={cn(
+            "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
+            "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100",
+            "hover:bg-blue-200 dark:hover:bg-blue-800"
+          )}
+        >
+          {item.clientName || "—"}
+        </button>
+      ),
     },
     {
-      key: "_eventName",
+      key: "eventName",
       label: "Событие",
       sortable: true,
-      render: (item: ScheduleEvent) => {
-        const counterparty = getCounterpartyById(item.counterpartyId);
-        if (!counterparty) return <span className="text-[var(--foreground)]/50">Не найден</span>;
-        const eventText = counterparty.event || "Не указано";
-        return (
-          <button
-            onClick={(e) => handleCounterpartyClick(e, item.counterpartyId)}
-            className={cn(
-              "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
-              "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100",
-              "hover:bg-purple-200 dark:hover:bg-purple-800"
-            )}
-          >
-            {eventText}
-          </button>
-        );
-      },
+      render: (item: ScheduleEventItem) => (
+        <button
+          onClick={(e) => handleCounterpartyClick(e, item.counterpartyId)}
+          className={cn(
+            "px-2 py-1 text-xs rounded cursor-pointer transition-colors",
+            "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100",
+            "hover:bg-purple-200 dark:hover:bg-purple-800"
+          )}
+        >
+          {item.eventName || item.counterpartyName || "—"}
+        </button>
+      ),
     },
     {
       key: "date",
       label: "Дата",
       sortable: true,
-      render: (item: ScheduleEvent) => formatDate(item.date),
+      render: (item: ScheduleEventItem) => formatDate(item.dateTime),
     },
     {
       key: "time",
       label: "Время",
       sortable: true,
-      render: (item: ScheduleEvent) => item.time,
+      render: (item: ScheduleEventItem) => formatTime(item.dateTime),
     },
     {
       key: "amount",
       label: "Сумма",
       sortable: true,
-      render: (item: ScheduleEvent) => (
-        <span className="font-medium text-[var(--color-golden)]">{formatAmount(item.amount)}</span>
+      render: (item: ScheduleEventItem) => (
+        <span className="font-medium text-[var(--color-golden)]">
+          {formatAmount(item.amount)}
+        </span>
       ),
     },
     {
       key: "actions",
       label: "Действия",
       sortable: false,
-      render: (item: ScheduleEvent) => (
+      render: (item: ScheduleEventItem) => (
         <div className="flex items-center gap-2">
           <Button
             variant="text"
@@ -266,6 +388,17 @@ export default function SchedulePage() {
     },
   ];
 
+  if (isLoading && schedule.length === 0) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold uppercase mb-2">Расписание</h1>
+        <Card className="p-6">
+          <p className="text-center">Загрузка...</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -288,11 +421,11 @@ export default function SchedulePage() {
         <div className="overflow-x-auto">
           <Table
             columns={columns}
-            data={paginatedData}
-            sortKey={sortKey || undefined}
-            sortDirection={sortDirection}
+            data={schedule}
+            sortKey={sortBy}
+            sortDirection={sortOrder}
             onSort={handleSort}
-            onRowClick={handleView}
+            onRowClick={(item) => handleView(item as ScheduleEventItem)}
           />
         </div>
         <div className="p-6">
@@ -301,7 +434,7 @@ export default function SchedulePage() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
             itemsPerPage={itemsPerPage}
-            totalItems={sortedData.length}
+            totalItems={total}
             onItemsPerPageChange={handleItemsPerPageChange}
             itemsPerPageOptions={[10, 20, 50, 100]}
           />
@@ -315,9 +448,33 @@ export default function SchedulePage() {
             setIsDetailModalOpen(false);
             setSelectedEvent(null);
           }}
-          event={selectedEvent}
-          client={getClientById(selectedEvent.clientId) || null}
-          counterparty={getCounterpartyById(selectedEvent.counterpartyId) || null}
+          event={{
+            id: selectedEvent.id,
+            clientId: selectedEvent.userId,
+            counterpartyId: selectedEvent.counterpartyId,
+            date: selectedEvent.dateTime.slice(0, 10),
+            time: selectedEvent.dateTime.slice(11, 16),
+            amount: String(selectedEvent.amount),
+          }}
+          client={(() => {
+            const c = selectedClient ?? clients.find((c) => c.id === selectedEvent.userId);
+            if (!c) return null;
+            return {
+              id: c.id,
+              name: c.name,
+              email: "email" in c && c.email != null ? c.email : "",
+              eventDate: "",
+              questionnaireCompleted: false,
+              subscriptionActive: false,
+              questionnaire: null,
+              subscription: null,
+            };
+          })()}
+          counterparty={
+            selectedCounterparty ??
+            counterparties.find((c) => c.id === selectedEvent.counterpartyId) ??
+            null
+          }
         />
       )}
 
@@ -336,12 +493,24 @@ export default function SchedulePage() {
             setIsEditModalOpen(false);
             setSelectedEvent(null);
           }}
-          event={selectedEvent}
+          event={eventToEditShape(selectedEvent)}
           clients={clients}
           counterparties={counterparties}
           onSave={handleSave}
+          onDelete={handleDeleteClick}
         />
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Удаление мероприятия"
+        message={`Удалить мероприятие от ${selectedEvent ? formatDate(selectedEvent.dateTime) : ""}?`}
+        confirmText="Удалить"
+        cancelText="Отмена"
+        variant="danger"
+      />
 
       {selectedClient && (
         <ClientDetailModal
@@ -350,7 +519,17 @@ export default function SchedulePage() {
             setIsClientModalOpen(false);
             setSelectedClient(null);
           }}
-          client={selectedClient}
+          client={{
+            id: selectedClient.id,
+            name: selectedClient.name,
+            email: selectedClient.email ?? "",
+            eventDate: undefined,
+            questionnaireCompleted: false,
+            subscriptionActive: false,
+            banned: false,
+            questionnaire: undefined,
+            subscription: undefined,
+          }}
         />
       )}
 

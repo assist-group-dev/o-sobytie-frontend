@@ -62,7 +62,6 @@ export function ScheduleCreateModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onCreate(formData);
-    onClose();
   };
 
   return (

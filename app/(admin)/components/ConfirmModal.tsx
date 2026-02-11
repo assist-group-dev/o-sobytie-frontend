@@ -25,8 +25,7 @@ export function ConfirmModal({
   variant = "default",
 }: ConfirmModalProps) {
   const handleConfirm = () => {
-    onConfirm();
-    onClose();
+    Promise.resolve(onConfirm()).then(() => onClose()).catch(() => {});
   };
 
   return (
