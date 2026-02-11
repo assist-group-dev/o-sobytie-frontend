@@ -7,14 +7,13 @@ import { cn } from "@/utils/cn";
 interface QuestionnaireData {
   allergies: string;
   dietaryRestrictions: string[];
+  dietaryRestrictionsOther?: string;
   physicalLimitations: string[];
+  physicalLimitationsOther?: string;
   fears: string[];
-  fitnessLevel: string;
-  activityPreference: string;
-  activityTypes: string[];
+  fearsOther?: string;
   timePreference: string[];
   dayPreference: string[];
-  medicalContraindications: string;
   additionalInfo: string;
 }
 
@@ -35,9 +34,10 @@ interface Client {
   id: string;
   name: string;
   email: string;
-  eventDate: string;
-  questionnaireCompleted: boolean;
-  subscriptionActive: boolean;
+  eventDate?: string;
+  questionnaireCompleted?: boolean;
+  subscriptionActive?: boolean;
+  banned?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionData;
 }
@@ -166,36 +166,33 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Пищевые ограничения</p>
                     <p className="font-medium">{client.questionnaire.dietaryRestrictions.join(", ")}</p>
+                    {client.questionnaire.dietaryRestrictionsOther && (
+                      <p className="text-sm text-[var(--foreground)]/70 mt-1 italic">
+                        Другое: {client.questionnaire.dietaryRestrictionsOther}
+                      </p>
+                    )}
                   </div>
                 )}
                 {client.questionnaire.physicalLimitations && client.questionnaire.physicalLimitations.length > 0 && (
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Физические ограничения</p>
                     <p className="font-medium">{client.questionnaire.physicalLimitations.join(", ")}</p>
+                    {client.questionnaire.physicalLimitationsOther && (
+                      <p className="text-sm text-[var(--foreground)]/70 mt-1 italic">
+                        Другое: {client.questionnaire.physicalLimitationsOther}
+                      </p>
+                    )}
                   </div>
                 )}
                 {client.questionnaire.fears && client.questionnaire.fears.length > 0 && (
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Страхи и фобии</p>
                     <p className="font-medium">{client.questionnaire.fears.join(", ")}</p>
-                  </div>
-                )}
-                {client.questionnaire.fitnessLevel && (
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Уровень физической подготовки</p>
-                    <p className="font-medium">{client.questionnaire.fitnessLevel}</p>
-                  </div>
-                )}
-                {client.questionnaire.activityPreference && (
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Предпочтение по формату</p>
-                    <p className="font-medium">{client.questionnaire.activityPreference}</p>
-                  </div>
-                )}
-                {client.questionnaire.activityTypes && client.questionnaire.activityTypes.length > 0 && (
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Интересующие типы активностей</p>
-                    <p className="font-medium">{client.questionnaire.activityTypes.join(", ")}</p>
+                    {client.questionnaire.fearsOther && (
+                      <p className="text-sm text-[var(--foreground)]/70 mt-1 italic">
+                        Другое: {client.questionnaire.fearsOther}
+                      </p>
+                    )}
                   </div>
                 )}
                 {client.questionnaire.timePreference && client.questionnaire.timePreference.length > 0 && (
@@ -208,12 +205,6 @@ export function ClientDetailModal({ isOpen, onClose, client }: ClientDetailModal
                   <div>
                     <p className="text-sm text-[var(--foreground)]/60 mb-1">Предпочтительные дни</p>
                     <p className="font-medium">{client.questionnaire.dayPreference.join(", ")}</p>
-                  </div>
-                )}
-                {client.questionnaire.medicalContraindications && (
-                  <div>
-                    <p className="text-sm text-[var(--foreground)]/60 mb-1">Медицинские противопоказания</p>
-                    <p className="font-medium">{client.questionnaire.medicalContraindications || "Не указаны"}</p>
                   </div>
                 )}
                 {client.questionnaire.additionalInfo && (

@@ -17,8 +17,11 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
   const [formData, setFormData] = useState({
     allergies: "",
     dietaryRestrictions: [] as string[],
+    dietaryRestrictionsOther: "",
     physicalLimitations: [] as string[],
+    physicalLimitationsOther: "",
     fears: [] as string[],
+    fearsOther: "",
     fitnessLevel: "",
     activityPreference: "",
     activityTypes: [] as string[],
@@ -28,12 +31,9 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
     additionalInfo: "",
   });
 
-  const dietaryOptions = ["Вегетарианство", "Веганство", "Халяль", "Кошер", "Без глютена", "Без лактозы"];
-  const physicalLimitationOptions = ["Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
-  const fearOptions = ["Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
-  const fitnessLevelOptions = ["Низкий", "Средний", "Высокий"];
-  const activityPreferenceOptions = ["Спокойный формат", "Активный формат", "Смешанный"];
-  const activityTypeOptions = ["Мастер-классы", "Спорт", "Искусство", "Кулинария", "Природа", "Развлечения", "Образование"];
+  const dietaryOptions = ["Без ограничений", "Вегетарианство", "Веганство", "Халяль", "Без глютена", "Без лактозы", "Другое"];
+  const physicalLimitationOptions = ["Без ограничений", "Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
+  const fearOptions = ["Без ограничений", "Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
   const timePreferenceOptions = ["Утро", "День", "Вечер"];
   const dayPreferenceOptions = ["Будни", "Выходные", "Любые дни"];
 
@@ -56,7 +56,7 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
       ],
     },
     {
-      title: "Физические ограничения и страхи",
+      title: "Физические ограничения",
       fields: [
         {
           label: "Физические ограничения",
@@ -64,34 +64,16 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
           key: "physicalLimitations",
           options: physicalLimitationOptions,
         },
+      ],
+    },
+    {
+      title: "Страхи и фобии",
+      fields: [
         {
           label: "Страхи и фобии",
           type: "multiselect",
           key: "fears",
           options: fearOptions,
-        },
-      ],
-    },
-    {
-      title: "Предпочтения по активности",
-      fields: [
-        {
-          label: "Уровень физической подготовки",
-          type: "radio",
-          key: "fitnessLevel",
-          options: fitnessLevelOptions,
-        },
-        {
-          label: "Предпочтение по формату",
-          type: "radio",
-          key: "activityPreference",
-          options: activityPreferenceOptions,
-        },
-        {
-          label: "Интересующие типы активностей",
-          type: "multiselect",
-          key: "activityTypes",
-          options: activityTypeOptions,
         },
       ],
     },
@@ -116,12 +98,6 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
       title: "Дополнительная информация",
       fields: [
         {
-          label: "Медицинские противопоказания",
-          type: "textarea",
-          key: "medicalContraindications",
-          placeholder: "Укажите медицинские противопоказания (если есть)",
-        },
-        {
           label: "Дополнительные пожелания",
           type: "textarea",
           key: "additionalInfo",
@@ -138,6 +114,40 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
   const handleMultiSelect = (key: string, value: string) => {
     setFormData((prev) => {
       const current = (prev[key as keyof typeof prev] as string[]) || [];
+      
+      if (key === "dietaryRestrictions") {
+        if (value === "Без ограничений") {
+          return { ...prev, [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"], dietaryRestrictionsOther: "" };
+        }
+        const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+        const updated = withoutNoRestrictions.includes(value)
+          ? withoutNoRestrictions.filter((item) => item !== value)
+          : [...withoutNoRestrictions, value];
+        return { ...prev, [key]: updated, dietaryRestrictionsOther: updated.includes("Другое") ? prev.dietaryRestrictionsOther : "" };
+      }
+      
+      if (key === "physicalLimitations") {
+        if (value === "Без ограничений") {
+          return { ...prev, [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"], physicalLimitationsOther: "" };
+        }
+        const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+        const updated = withoutNoRestrictions.includes(value)
+          ? withoutNoRestrictions.filter((item) => item !== value)
+          : [...withoutNoRestrictions, value];
+        return { ...prev, [key]: updated, physicalLimitationsOther: updated.includes("Другое") ? prev.physicalLimitationsOther : "" };
+      }
+      
+      if (key === "fears") {
+        if (value === "Без ограничений") {
+          return { ...prev, [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"], fearsOther: "" };
+        }
+        const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+        const updated = withoutNoRestrictions.includes(value)
+          ? withoutNoRestrictions.filter((item) => item !== value)
+          : [...withoutNoRestrictions, value];
+        return { ...prev, [key]: updated, fearsOther: updated.includes("Другое") ? prev.fearsOther : "" };
+      }
+      
       const updated = current.includes(value)
         ? current.filter((item) => item !== value)
         : [...current, value];
@@ -165,8 +175,11 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
     setFormData({
       allergies: "",
       dietaryRestrictions: [],
+      dietaryRestrictionsOther: "",
       physicalLimitations: [],
+      physicalLimitationsOther: "",
       fears: [],
+      fearsOther: "",
       fitnessLevel: "",
       activityPreference: "",
       activityTypes: [],
@@ -177,12 +190,29 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
     });
   };
 
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 0:
+        return formData.dietaryRestrictions.length > 0;
+      case 1:
+        return formData.physicalLimitations.length > 0;
+      case 2:
+        return formData.fears.length > 0;
+      case 3:
+        return formData.timePreference.length > 0 && formData.dayPreference.length > 0;
+      case 4:
+        return true;
+      default:
+        return false;
+    }
+  };
+
   const currentStepData = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4">
+    <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-3xl w-full mx-2 sm:mx-4" closeOnBackdropClick={false}>
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="mb-4 sm:mb-6">
           <div className="mb-3 sm:mb-4">
@@ -247,22 +277,71 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
                     {field.options?.map((option) => {
                       const selected = (formData[field.key as keyof typeof formData] as string[])?.includes(option) || false;
                       return (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => handleMultiSelect(field.key, option)}
-                          className={cn(
-                            "w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 border-2 transition-all duration-200",
-                            selected
-                              ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                              : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                        <div key={option}>
+                          <button
+                            type="button"
+                            onClick={() => handleMultiSelect(field.key, option)}
+                            className={cn(
+                              "w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 border-2 transition-all duration-200",
+                              selected
+                                ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
+                                : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs sm:text-sm">{option}</span>
+                              {selected && <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-golden)]" />}
+                            </div>
+                          </button>
+                          {field.key === "dietaryRestrictions" && option === "Другое" && selected && (
+                            <div className="mt-2">
+                              <textarea
+                                value={formData.dietaryRestrictionsOther}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, dietaryRestrictionsOther: e.target.value }))}
+                                placeholder="Укажите ваши пищевые ограничения"
+                                rows={3}
+                                className={cn(
+                                  "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                                  "bg-[var(--background)] text-[var(--foreground)]",
+                                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]",
+                                  "resize-none"
+                                )}
+                              />
+                            </div>
                           )}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm">{option}</span>
-                            {selected && <Check className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-golden)]" />}
-                          </div>
-                        </button>
+                          {field.key === "physicalLimitations" && option === "Другое" && selected && (
+                            <div className="mt-2">
+                              <textarea
+                                value={formData.physicalLimitationsOther}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, physicalLimitationsOther: e.target.value }))}
+                                placeholder="Укажите ваши физические ограничения"
+                                rows={3}
+                                className={cn(
+                                  "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                                  "bg-[var(--background)] text-[var(--foreground)]",
+                                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]",
+                                  "resize-none"
+                                )}
+                              />
+                            </div>
+                          )}
+                          {field.key === "fears" && option === "Другое" && selected && (
+                            <div className="mt-2">
+                              <textarea
+                                value={formData.fearsOther}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, fearsOther: e.target.value }))}
+                                placeholder="Укажите ваши страхи и фобии"
+                                rows={3}
+                                className={cn(
+                                  "w-full px-3 sm:px-4 py-2 text-sm sm:text-base border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                                  "bg-[var(--background)] text-[var(--foreground)]",
+                                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)]",
+                                  "resize-none"
+                                )}
+                              />
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -296,6 +375,7 @@ export function QuestionnaireModal({ isOpen, onClose, onComplete }: Questionnair
             <Button
               size="lg"
               onClick={handleNext}
+              disabled={!isStepValid()}
               className="uppercase tracking-wider w-full sm:w-auto order-1 sm:order-2"
             >
               Далее

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Eye, Edit, Plus } from "lucide-react";
 import { Card } from "@/ui/components/Card";
 import { Button } from "@/ui/components/Button";
@@ -12,24 +12,22 @@ import { CounterpartyCreateModal } from "@/app/(admin)/components/CounterpartyCr
 import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface Counterparty {
   id: string;
   name: string;
-  address: string;
-  phone: string;
-  contactPerson: string;
-  description: string;
+  address?: string;
+  phone?: string;
+  contactPerson?: string;
+  description?: string;
   event?: string;
 }
 
-import counterpartiesData from "@/app/(admin)/data/counterparties.json";
-
-const mockCounterparties: Counterparty[] = counterpartiesData as Counterparty[];
-
 export default function CounterpartiesPage() {
   const addToast = useToastStore((state) => state.addToast);
-  const [counterparties, setCounterparties] = useState<Counterparty[]>(mockCounterparties);
+  const [counterparties, setCounterparties] = useState<Counterparty[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCounterparty, setSelectedCounterparty] = useState<Counterparty | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -39,6 +37,33 @@ export default function CounterpartiesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  useEffect(() => {
+    const fetchCounterparties = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch counterparties");
+        }
+
+        const data = await response.json();
+        setCounterparties(data);
+      } catch (error) {
+        console.error("Error fetching counterparties:", error);
+        addToast({
+          type: "error",
+          message: "Ошибка загрузки контрагентов",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCounterparties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sortedData = useMemo(
     () => sortData(counterparties, sortKey, sortDirection),
@@ -88,32 +113,67 @@ export default function CounterpartiesPage() {
     }
   };
 
-  const handleCreate = (data: Omit<Counterparty, "id">) => {
-    const newCounterparty: Counterparty = {
-      ...data,
-      id: String(counterparties.length + 1),
-    };
-    setCounterparties([...counterparties, newCounterparty]);
-    addToast({
-      type: "success",
-      message: `Контрагент "${data.name}" успешно создан`,
-    });
+  const handleCreate = async (data: Omit<Counterparty, "id">) => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message ?? "Failed to create counterparty");
+      }
+
+      const newCounterparty = await response.json();
+      setCounterparties([newCounterparty, ...counterparties]);
+      setIsCreateModalOpen(false);
+      addToast({
+        type: "success",
+        message: `Контрагент "${data.name}" успешно создан`,
+      });
+    } catch (error) {
+      console.error("Error creating counterparty:", error);
+      addToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Ошибка при создании контрагента",
+      });
+      throw error;
+    }
   };
 
   const handleDeleteClick = () => {
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedCounterparty) {
-      const deletedName = selectedCounterparty.name;
-      setCounterparties(counterparties.filter((item) => item.id !== selectedCounterparty.id));
-      setSelectedCounterparty(null);
-      setIsEditModalOpen(false);
-      addToast({
-        type: "success",
-        message: `Контрагент "${deletedName}" успешно удален`,
-      });
+      try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/counterparties/${selectedCounterparty.id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message ?? "Failed to delete counterparty");
+        }
+
+        const deletedName = selectedCounterparty.name;
+        setCounterparties(counterparties.filter((item) => item.id !== selectedCounterparty.id));
+        setSelectedCounterparty(null);
+        setIsEditModalOpen(false);
+        setIsDeleteConfirmOpen(false);
+        addToast({
+          type: "success",
+          message: `Контрагент "${deletedName}" успешно удален`,
+        });
+      } catch (error) {
+        console.error("Error deleting counterparty:", error);
+        addToast({
+          type: "error",
+          message: error instanceof Error ? error.message : "Ошибка при удалении контрагента",
+        });
+      }
     }
   };
 
@@ -158,13 +218,26 @@ export default function CounterpartiesPage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold uppercase">Контрагенты</h1>
+        </div>
+        <Card className="p-6">
+          <p className="text-center">Загрузка...</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold uppercase">Контрагенты</h1>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
-          Создать контрагента
+        <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center sm:gap-2 sm:px-5 sm:py-2.5 px-3 py-3">
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline">Создать контрагента</span>
         </Button>
       </div>
 

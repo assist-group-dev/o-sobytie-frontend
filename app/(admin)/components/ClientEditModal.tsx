@@ -9,14 +9,13 @@ import { cn } from "@/utils/cn";
 interface QuestionnaireData {
   allergies: string;
   dietaryRestrictions: string[];
+  dietaryRestrictionsOther?: string;
   physicalLimitations: string[];
+  physicalLimitationsOther?: string;
   fears: string[];
-  fitnessLevel: string;
-  activityPreference: string;
-  activityTypes: string[];
+  fearsOther?: string;
   timePreference: string[];
   dayPreference: string[];
-  medicalContraindications: string;
   additionalInfo: string;
 }
 
@@ -37,9 +36,9 @@ interface Client {
   id: string;
   name: string;
   email: string;
-  eventDate: string;
-  questionnaireCompleted: boolean;
-  subscriptionActive: boolean;
+  eventDate?: string;
+  questionnaireCompleted?: boolean;
+  subscriptionActive?: boolean;
   banned?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionData;
@@ -52,14 +51,13 @@ interface ClientEditModalProps {
   onSave: (data: Partial<Client>) => void;
   onBan?: () => void;
   onDelete?: () => void;
+  onRevokeAdminRights?: () => void;
+  deleteButtonText?: string;
 }
 
-const dietaryOptions = ["Вегетарианство", "Веганство", "Халяль", "Кошер", "Без глютена", "Без лактозы"];
-const physicalLimitationOptions = ["Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
-const fearOptions = ["Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
-const fitnessLevelOptions = ["Низкий", "Средний", "Высокий"];
-const activityPreferenceOptions = ["Спокойный формат", "Активный формат", "Смешанный"];
-const activityTypeOptions = ["Мастер-классы", "Спорт", "Искусство", "Кулинария", "Природа", "Развлечения", "Образование"];
+const dietaryOptions = ["Без ограничений", "Вегетарианство", "Веганство", "Халяль", "Без глютена", "Без лактозы", "Другое"];
+const physicalLimitationOptions = ["Без ограничений", "Проблемы с суставами", "Проблемы со спиной", "Ограниченная подвижность", "Другое"];
+const fearOptions = ["Без ограничений", "Высота", "Вода", "Закрытые пространства", "Темнота", "Толпа", "Другое"];
 const timePreferenceOptions = ["Утро", "День", "Вечер"];
 const dayPreferenceOptions = ["Будни", "Выходные", "Любые дни"];
 const premiumLevelOptions = [
@@ -74,7 +72,7 @@ const deliveryTimeSlots = [
   { value: "18:00-21:00", label: "18:00 - 21:00" },
 ];
 
-export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete }: ClientEditModalProps) {
+export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete, onRevokeAdminRights, deleteButtonText = "Удалить" }: ClientEditModalProps) {
   const [activeTab, setActiveTab] = useState<"main" | "questionnaire" | "subscription">("main");
   const [formData, setFormData] = useState<Partial<Client>>({
     name: "",
@@ -85,14 +83,13 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
     questionnaire: {
       allergies: "",
       dietaryRestrictions: [],
+      dietaryRestrictionsOther: "",
       physicalLimitations: [],
+      physicalLimitationsOther: "",
       fears: [],
-      fitnessLevel: "",
-      activityPreference: "",
-      activityTypes: [],
+      fearsOther: "",
       timePreference: [],
       dayPreference: [],
-      medicalContraindications: "",
       additionalInfo: "",
     },
     subscription: {
@@ -120,14 +117,13 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
         questionnaire: client.questionnaire || {
           allergies: "",
           dietaryRestrictions: [],
+          dietaryRestrictionsOther: "",
           physicalLimitations: [],
+          physicalLimitationsOther: "",
           fears: [],
-          fitnessLevel: "",
-          activityPreference: "",
-          activityTypes: [],
+          fearsOther: "",
           timePreference: [],
           dayPreference: [],
-          medicalContraindications: "",
           additionalInfo: "",
         },
         subscription: client.subscription || {
@@ -156,6 +152,82 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
 
   const handleMultiSelect = (key: keyof QuestionnaireData, value: string) => {
     const current = (formData.questionnaire?.[key] as string[]) || [];
+    
+    if (key === "dietaryRestrictions") {
+      if (value === "Без ограничений") {
+        return setFormData({
+          ...formData,
+          questionnaire: {
+            ...formData.questionnaire!,
+            [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"],
+            dietaryRestrictionsOther: "",
+          },
+        });
+      }
+      const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+      const updated = withoutNoRestrictions.includes(value)
+        ? withoutNoRestrictions.filter((item) => item !== value)
+        : [...withoutNoRestrictions, value];
+      return setFormData({
+        ...formData,
+        questionnaire: {
+          ...formData.questionnaire!,
+          [key]: updated,
+          dietaryRestrictionsOther: updated.includes("Другое") ? formData.questionnaire?.dietaryRestrictionsOther || "" : "",
+        },
+      });
+    }
+    
+    if (key === "physicalLimitations") {
+      if (value === "Без ограничений") {
+        return setFormData({
+          ...formData,
+          questionnaire: {
+            ...formData.questionnaire!,
+            [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"],
+            physicalLimitationsOther: "",
+          },
+        });
+      }
+      const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+      const updated = withoutNoRestrictions.includes(value)
+        ? withoutNoRestrictions.filter((item) => item !== value)
+        : [...withoutNoRestrictions, value];
+      return setFormData({
+        ...formData,
+        questionnaire: {
+          ...formData.questionnaire!,
+          [key]: updated,
+          physicalLimitationsOther: updated.includes("Другое") ? formData.questionnaire?.physicalLimitationsOther || "" : "",
+        },
+      });
+    }
+    
+    if (key === "fears") {
+      if (value === "Без ограничений") {
+        return setFormData({
+          ...formData,
+          questionnaire: {
+            ...formData.questionnaire!,
+            [key]: current.includes("Без ограничений") ? [] : ["Без ограничений"],
+            fearsOther: "",
+          },
+        });
+      }
+      const withoutNoRestrictions = current.filter((item) => item !== "Без ограничений");
+      const updated = withoutNoRestrictions.includes(value)
+        ? withoutNoRestrictions.filter((item) => item !== value)
+        : [...withoutNoRestrictions, value];
+      return setFormData({
+        ...formData,
+        questionnaire: {
+          ...formData.questionnaire!,
+          [key]: updated,
+          fearsOther: updated.includes("Другое") ? formData.questionnaire?.fearsOther || "" : "",
+        },
+      });
+    }
+    
     const updated = current.includes(value)
       ? current.filter((item) => item !== value)
       : [...current, value];
@@ -332,22 +404,46 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                   {dietaryOptions.map((option) => {
                     const selected = formData.questionnaire?.dietaryRestrictions?.includes(option) || false;
                     return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => handleMultiSelect("dietaryRestrictions", option)}
-                        className={cn(
-                          "px-3 py-2 border-2 transition-all duration-200 text-left",
-                          selected
-                            ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                            : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                      <div key={option}>
+                        <button
+                          type="button"
+                          onClick={() => handleMultiSelect("dietaryRestrictions", option)}
+                          className={cn(
+                            "w-full px-3 py-2 border-2 transition-all duration-200 text-left",
+                            selected
+                              ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
+                              : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">{option}</span>
+                            {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
+                          </div>
+                        </button>
+                        {option === "Другое" && selected && (
+                          <div className="mt-2">
+                            <textarea
+                              value={formData.questionnaire?.dietaryRestrictionsOther || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  questionnaire: {
+                                    ...formData.questionnaire!,
+                                    dietaryRestrictionsOther: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Укажите ваши пищевые ограничения"
+                              rows={3}
+                              className={cn(
+                                "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                                "bg-[var(--background)] text-[var(--foreground)]",
+                                "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)] resize-none"
+                              )}
+                            />
+                          </div>
                         )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs">{option}</span>
-                          {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
-                        </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -359,22 +455,46 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                   {physicalLimitationOptions.map((option) => {
                     const selected = formData.questionnaire?.physicalLimitations?.includes(option) || false;
                     return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => handleMultiSelect("physicalLimitations", option)}
-                        className={cn(
-                          "px-3 py-2 border-2 transition-all duration-200 text-left",
-                          selected
-                            ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                            : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                      <div key={option}>
+                        <button
+                          type="button"
+                          onClick={() => handleMultiSelect("physicalLimitations", option)}
+                          className={cn(
+                            "w-full px-3 py-2 border-2 transition-all duration-200 text-left",
+                            selected
+                              ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
+                              : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">{option}</span>
+                            {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
+                          </div>
+                        </button>
+                        {option === "Другое" && selected && (
+                          <div className="mt-2">
+                            <textarea
+                              value={formData.questionnaire?.physicalLimitationsOther || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  questionnaire: {
+                                    ...formData.questionnaire!,
+                                    physicalLimitationsOther: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Укажите ваши физические ограничения"
+                              rows={3}
+                              className={cn(
+                                "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                                "bg-[var(--background)] text-[var(--foreground)]",
+                                "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)] resize-none"
+                              )}
+                            />
+                          </div>
                         )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs">{option}</span>
-                          {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
-                        </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -386,97 +506,46 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                   {fearOptions.map((option) => {
                     const selected = formData.questionnaire?.fears?.includes(option) || false;
                     return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => handleMultiSelect("fears", option)}
-                        className={cn(
-                          "px-3 py-2 border-2 transition-all duration-200 text-left",
-                          selected
-                            ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                            : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                      <div key={option}>
+                        <button
+                          type="button"
+                          onClick={() => handleMultiSelect("fears", option)}
+                          className={cn(
+                            "w-full px-3 py-2 border-2 transition-all duration-200 text-left",
+                            selected
+                              ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
+                              : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs">{option}</span>
+                            {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
+                          </div>
+                        </button>
+                        {option === "Другое" && selected && (
+                          <div className="mt-2">
+                            <textarea
+                              value={formData.questionnaire?.fearsOther || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  questionnaire: {
+                                    ...formData.questionnaire!,
+                                    fearsOther: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Укажите ваши страхи и фобии"
+                              rows={3}
+                              className={cn(
+                                "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                                "bg-[var(--background)] text-[var(--foreground)]",
+                                "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)] resize-none"
+                              )}
+                            />
+                          </div>
                         )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs">{option}</span>
-                          {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Уровень физической подготовки</label>
-                <div className="space-y-2">
-                  {fitnessLevelOptions.map((option) => (
-                    <label key={option} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-[var(--color-cream)]/20">
-                      <input
-                        type="radio"
-                        name="fitnessLevel"
-                        value={option}
-                        checked={formData.questionnaire?.fitnessLevel === option}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            questionnaire: { ...formData.questionnaire!, fitnessLevel: e.target.value },
-                          })
-                        }
-                        className="w-4 h-4 text-[var(--color-golden)] focus:ring-[var(--color-golden)]"
-                      />
-                      <span className="text-sm">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Предпочтение по формату</label>
-                <div className="space-y-2">
-                  {activityPreferenceOptions.map((option) => (
-                    <label key={option} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-[var(--color-cream)]/20">
-                      <input
-                        type="radio"
-                        name="activityPreference"
-                        value={option}
-                        checked={formData.questionnaire?.activityPreference === option}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            questionnaire: { ...formData.questionnaire!, activityPreference: e.target.value },
-                          })
-                        }
-                        className="w-4 h-4 text-[var(--color-golden)] focus:ring-[var(--color-golden)]"
-                      />
-                      <span className="text-sm">{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Интересующие типы активностей</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {activityTypeOptions.map((option) => {
-                    const selected = formData.questionnaire?.activityTypes?.includes(option) || false;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => handleMultiSelect("activityTypes", option)}
-                        className={cn(
-                          "px-3 py-2 border-2 transition-all duration-200 text-left",
-                          selected
-                            ? "border-[var(--color-golden)] bg-[var(--color-golden)]/10"
-                            : "border-[var(--color-cream)] dark:border-[var(--color-cream)]/50 hover:border-[var(--color-golden)]/50"
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs">{option}</span>
-                          {selected && <Check className="w-4 h-4 text-[var(--color-golden)]" />}
-                        </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -534,28 +603,6 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                     );
                   })}
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="medicalContraindications" className="block text-sm font-medium mb-2">
-                  Медицинские противопоказания
-                </label>
-                <textarea
-                  id="medicalContraindications"
-                  value={formData.questionnaire?.medicalContraindications || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      questionnaire: { ...formData.questionnaire!, medicalContraindications: e.target.value },
-                    })
-                  }
-                  rows={3}
-                  className={cn(
-                    "w-full px-4 py-2 border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                    "bg-[var(--background)] text-[var(--foreground)]",
-                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50 focus:border-[var(--color-golden)] resize-none"
-                  )}
-                />
               </div>
 
               <div>
@@ -817,7 +864,21 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
             </div>
           )}
 
-          <div className="flex gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+          <div className="flex flex-wrap gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            {onRevokeAdminRights && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (onRevokeAdminRights) {
+                    onRevokeAdminRights();
+                  }
+                }}
+                className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              >
+                Отозвать админские права
+              </Button>
+            )}
             {onDelete && (
               <Button
                 type="button"
@@ -827,9 +888,9 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                     onDelete();
                   }
                 }}
-                className="flex-1 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
-                Удалить
+                {deleteButtonText}
               </Button>
             )}
             {onBan && (
@@ -842,7 +903,7 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                   }
                 }}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2",
+                  "flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 flex items-center justify-center gap-2",
                   client?.banned
                     ? "border-green-500 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
                     : "border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
@@ -852,10 +913,10 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
                 {client?.banned ? "Разбанить" : "Забанить"}
               </Button>
             )}
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0">
               Отмена
             </Button>
-            <Button type="submit" className="flex-1">
+            <Button type="submit" className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0">
               Сохранить
             </Button>
           </div>

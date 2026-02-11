@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Eye, Edit } from "lucide-react";
 import { Card } from "@/ui/components/Card";
 import { Button } from "@/ui/components/Button";
@@ -12,19 +12,18 @@ import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
-import clientsData from "@/app/(admin)/data/clients.json";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface QuestionnaireData {
   allergies: string;
   dietaryRestrictions: string[];
+  dietaryRestrictionsOther?: string;
   physicalLimitations: string[];
+  physicalLimitationsOther?: string;
   fears: string[];
-  fitnessLevel: string;
-  activityPreference: string;
-  activityTypes: string[];
+  fearsOther?: string;
   timePreference: string[];
   dayPreference: string[];
-  medicalContraindications: string;
   additionalInfo: string;
 }
 
@@ -45,22 +44,18 @@ interface Client {
   id: string;
   name: string;
   email: string;
-  eventDate: string;
-  questionnaireCompleted: boolean;
-  subscriptionActive: boolean;
-  banned?: boolean;
+  eventDate?: string;
+  questionnaireCompleted?: boolean;
+  subscriptionActive?: boolean;
+  banned: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionData;
 }
 
-const mockClients: Client[] = (clientsData as Client[]).map((client) => ({
-  ...client,
-  banned: client.banned ?? false,
-}));
-
 export default function ClientsPage() {
   const addToast = useToastStore((state) => state.addToast);
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -70,6 +65,42 @@ export default function ClientsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch clients");
+        }
+
+        const data = await response.json();
+        setClients(
+          data.map((client: any) => ({
+            id: client.id,
+            name: client.name,
+            email: client.email,
+            banned: client.banned ?? false,
+            questionnaireCompleted: Math.random() > 0.5,
+            subscriptionActive: Math.random() > 0.5,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        addToast({
+          type: "error",
+          message: "Ошибка загрузки клиентов",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sortedClients = useMemo(
     () => sortData(clients, sortKey, sortDirection),
@@ -123,19 +154,37 @@ export default function ClientsPage() {
     setIsBanConfirmOpen(true);
   };
 
-  const handleBanConfirm = () => {
+  const handleBanConfirm = async () => {
     if (selectedClient) {
-      const newBannedStatus = !selectedClient.banned;
-      setClients(
-        clients.map((item) =>
-          item.id === selectedClient.id ? { ...item, banned: newBannedStatus } : item
-        )
-      );
-      setSelectedClient({ ...selectedClient, banned: newBannedStatus });
-      addToast({
-        type: "success",
-        message: `Клиент "${selectedClient.name}" ${newBannedStatus ? "забанен" : "разбанен"}`,
-      });
+      try {
+        const newBannedStatus = !selectedClient.banned;
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients/${selectedClient.id}/ban`, {
+          method: "PATCH",
+          body: JSON.stringify({ banned: newBannedStatus }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to ban/unban user");
+        }
+
+        setClients(
+          clients.map((item) =>
+            item.id === selectedClient.id ? { ...item, banned: newBannedStatus } : item
+          )
+        );
+        setSelectedClient({ ...selectedClient, banned: newBannedStatus });
+        setIsBanConfirmOpen(false);
+        addToast({
+          type: "success",
+          message: `Клиент "${selectedClient.name}" ${newBannedStatus ? "забанен" : "разбанен"}`,
+        });
+      } catch (error) {
+        console.error("Error banning user:", error);
+        addToast({
+          type: "error",
+          message: "Ошибка при изменении статуса бана",
+        });
+      }
     }
   };
 
@@ -159,12 +208,6 @@ export default function ClientsPage() {
   const columns = [
     { key: "name", label: "Имя", sortable: true },
     { key: "email", label: "Email", sortable: true },
-    {
-      key: "eventDate",
-      label: "Дата мероприятия",
-      sortable: true,
-      render: (item: Client) => item.eventDate || "Не указана",
-    },
     {
       key: "questionnaireCompleted",
       label: "Анкета",
@@ -247,6 +290,19 @@ export default function ClientsPage() {
       ),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold uppercase mb-2">Клиенты</h1>
+        </div>
+        <Card className="p-6">
+          <p className="text-center">Загрузка...</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

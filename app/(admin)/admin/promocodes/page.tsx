@@ -173,10 +173,10 @@ export default function PromocodesPage() {
         <h1 className="text-3xl font-bold uppercase">Промокоды</h1>
         <Button
           onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2"
+          className="flex items-center sm:gap-2 sm:px-5 sm:py-2.5 px-3 py-3"
         >
           <Plus className="h-4 w-4" />
-          Создать промокод
+          <span className="hidden sm:inline">Создать промокод</span>
         </Button>
       </div>
 

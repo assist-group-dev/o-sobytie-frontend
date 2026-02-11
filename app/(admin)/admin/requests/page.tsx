@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Eye } from "lucide-react";
 import { Card } from "@/ui/components/Card";
 import { Button } from "@/ui/components/Button";
@@ -11,27 +11,21 @@ import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 type RequestStatus = "Новый" | "Просмотрен" | "Отвечен" | "В работе" | "Решен";
 
 interface Request {
   id: string;
-  name: string;
-  email: string;
+  userName: string;
+  userEmail: string;
   subject: string;
   contactMethod: string;
-  contactData?: string;
+  contact: string;
   createdAt: string;
   message: string;
   status: RequestStatus;
 }
-
-import requestsData from "@/app/(admin)/data/requests.json";
-
-const mockRequests: Request[] = (requestsData as Request[]).map((request) => ({
-  ...request,
-  status: (request.status || "Новый") as RequestStatus,
-}));
 
 const contactMethodNames: Record<string, string> = {
   telegram: "Telegram",
@@ -58,7 +52,8 @@ const getStatusColor = (status: RequestStatus) => {
 
 export default function RequestsPage() {
   const addToast = useToastStore((state) => state.addToast);
-  const [requests, setRequests] = useState<Request[]>(mockRequests);
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -67,6 +62,45 @@ export default function RequestsPage() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState<Request | null>(null);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/requests`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch requests");
+        }
+
+        const data = await response.json();
+        setRequests(
+          data.map((request: any) => ({
+            id: request.id,
+            userName: request.userName,
+            userEmail: request.userEmail,
+            subject: request.subject,
+            contactMethod: request.contactMethod,
+            contact: request.contact,
+            createdAt: request.createdAt,
+            message: request.message,
+            status: request.status as RequestStatus,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching requests:", error);
+        addToast({
+          type: "error",
+          message: "Ошибка загрузки обращений",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sortedData = useMemo(
     () => sortData(requests, sortKey, sortDirection),
@@ -97,16 +131,34 @@ export default function RequestsPage() {
     setIsDetailModalOpen(true);
   };
 
-  const handleStatusChange = (requestId: string, newStatus: RequestStatus) => {
-    setRequests(
-      requests.map((item) =>
-        item.id === requestId ? { ...item, status: newStatus } : item
-      )
-    );
-    addToast({
-      type: "success",
-      message: "Статус обращения обновлен",
-    });
+  const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/requests/${requestId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message ?? "Failed to update status");
+      }
+
+      setRequests(
+        requests.map((item) =>
+          item.id === requestId ? { ...item, status: newStatus } : item
+        )
+      );
+      addToast({
+        type: "success",
+        message: "Статус обращения обновлен",
+      });
+    } catch (error) {
+      console.error("Error updating status:", error);
+      addToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Ошибка обновления статуса",
+      });
+    }
   };
 
   const handleDeleteClick = (requestId: string) => {
@@ -117,16 +169,33 @@ export default function RequestsPage() {
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (requestToDelete) {
-      const deletedSubject = requestToDelete.subject;
-      setRequests(requests.filter((item) => item.id !== requestToDelete.id));
-      setRequestToDelete(null);
-      setIsDetailModalOpen(false);
-      addToast({
-        type: "success",
-        message: `Обращение "${deletedSubject}" успешно удалено`,
-      });
+      try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/admin/requests/${requestToDelete.id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message ?? "Failed to delete request");
+        }
+
+        const deletedSubject = requestToDelete.subject;
+        setRequests(requests.filter((item) => item.id !== requestToDelete.id));
+        setRequestToDelete(null);
+        setIsDetailModalOpen(false);
+        addToast({
+          type: "success",
+          message: `Обращение "${deletedSubject}" успешно удалено`,
+        });
+      } catch (error) {
+        console.error("Error deleting request:", error);
+        addToast({
+          type: "error",
+          message: error instanceof Error ? error.message : "Ошибка удаления обращения",
+        });
+      }
     }
   };
 
@@ -142,21 +211,21 @@ export default function RequestsPage() {
   };
 
   const columns = [
-    { key: "name", label: "Имя", sortable: true },
-    { key: "email", label: "Почта", sortable: true },
+    { key: "userName", label: "Имя", sortable: true },
+    { key: "userEmail", label: "Почта", sortable: true },
     { key: "subject", label: "Тема", sortable: true },
     {
       key: "contactMethod",
       label: "Способ связи",
       sortable: true,
       render: (item: Request) => (
-        <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <span className="font-medium">
             {contactMethodNames[item.contactMethod] || item.contactMethod}
           </span>
-          {item.contactData && (
+          {item.contact && (
             <span className="text-xs text-[var(--foreground)]/60">
-              {item.contactData}
+              {item.contact}
             </span>
           )}
         </div>
@@ -200,6 +269,19 @@ export default function RequestsPage() {
       ),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold uppercase mb-2">Обращения</h1>
+        </div>
+        <Card className="p-6">
+          <p className="text-center">Загрузка...</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

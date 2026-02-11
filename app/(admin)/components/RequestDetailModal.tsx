@@ -11,11 +11,11 @@ type RequestStatus = "Новый" | "Просмотрен" | "Отвечен" | 
 
 interface Request {
   id: string;
-  name: string;
-  email: string;
+  userName: string;
+  userEmail: string;
   subject: string;
   contactMethod: string;
-  contactData?: string;
+  contact: string;
   createdAt: string;
   message: string;
   status: RequestStatus;
@@ -169,11 +169,11 @@ export function RequestDetailModal({ isOpen, onClose, request, onStatusChange, o
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Имя</p>
-                <p className="font-medium">{request.name}</p>
+                <p className="font-medium">{request.userName}</p>
               </div>
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Email</p>
-                <p className="font-medium">{request.email}</p>
+                <p className="font-medium">{request.userEmail}</p>
               </div>
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Тема</p>
@@ -185,9 +185,9 @@ export function RequestDetailModal({ isOpen, onClose, request, onStatusChange, o
                   <p className="font-medium">
                     {contactMethodNames[request.contactMethod] || request.contactMethod}
                   </p>
-                  {request.contactData && (
+                  {request.contact && (
                     <p className="text-sm text-[var(--foreground)]/70">
-                      {request.contactData}
+                      {request.contact}
                     </p>
                   )}
                 </div>

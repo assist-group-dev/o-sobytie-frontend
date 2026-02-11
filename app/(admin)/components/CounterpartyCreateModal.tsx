@@ -3,22 +3,23 @@
 import { useState, useEffect } from "react";
 import { Modal } from "@/ui/components/Modal";
 import { Button } from "@/ui/components/Button";
+import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { cn } from "@/utils/cn";
 
 interface Counterparty {
   id: string;
   name: string;
-  address: string;
-  phone: string;
-  contactPerson: string;
-  description: string;
+  address?: string;
+  phone?: string;
+  contactPerson?: string;
+  description?: string;
   event?: string;
 }
 
 interface CounterpartyCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: Omit<Counterparty, "id">) => void;
+  onCreate: (data: Omit<Counterparty, "id">) => Promise<void>;
 }
 
 export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: CounterpartyCreateModalProps) {
@@ -30,6 +31,8 @@ export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: Counterpa
     description: "",
     event: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConfirmCloseOpen, setIsConfirmCloseOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -41,17 +44,47 @@ export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: Counterpa
         description: "",
         event: "",
       });
+      setIsConfirmCloseOpen(false);
     }
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onCreate(formData);
+  const hasFilledFields = () => {
+    return !!(
+      formData.name ||
+      formData.address ||
+      formData.phone ||
+      formData.contactPerson ||
+      formData.description ||
+      formData.event
+    );
+  };
+
+  const handleClose = () => {
+    if (hasFilledFields() && !isLoading) {
+      setIsConfirmCloseOpen(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setIsConfirmCloseOpen(false);
     onClose();
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await onCreate(formData);
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="p-0 max-w-4xl w-full mx-2 sm:mx-4 max-h-[90vh]">
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose} className="p-0 max-w-4xl w-full mx-2 sm:mx-4 max-h-[90vh]">
       <div className="p-6 overflow-y-auto max-h-[90vh]">
         <h2 className="text-2xl font-bold uppercase mb-6">Создание контрагента</h2>
 
@@ -163,16 +196,28 @@ export function CounterpartyCreateModal({ isOpen, onClose, onCreate }: Counterpa
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={handleClose} className="flex-1" disabled={isLoading}>
               Отмена
             </Button>
-            <Button type="submit" className="flex-1">
-              Создать
+            <Button type="submit" className="flex-1" disabled={isLoading}>
+              {isLoading ? "Создание..." : "Создать"}
             </Button>
           </div>
         </form>
       </div>
     </Modal>
+
+    <ConfirmModal
+      isOpen={isConfirmCloseOpen}
+      onClose={() => setIsConfirmCloseOpen(false)}
+      onConfirm={handleConfirmClose}
+      title="Подтверждение закрытия"
+      message="При закрытии все введенные данные будут потеряны. Вы уверены, что хотите закрыть форму?"
+      confirmText="Закрыть"
+      cancelText="Отмена"
+      variant="danger"
+    />
+    </>
   );
 }
 

@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, CreditCard, MessageCircle, HelpCircle, Ticket, Menu, X } from "lucide-react";
+import { User, MessageCircle, HelpCircle, Ticket, Menu, X } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Logo } from "@/ui/components/Logo";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
+import { ToastContainer } from "@/app/(cabinet)/components/ToastContainer";
+import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 
 interface CabinetLayoutProps {
   children: React.ReactNode;
@@ -15,7 +17,6 @@ interface CabinetLayoutProps {
 
 const navigation = [
   { id: "profile", label: "Профиль", href: "/cabinet", icon: User },
-  { id: "subscription", label: "Подписка", href: "/cabinet/subscription", icon: CreditCard },
   { id: "contact", label: "Связь с нами", href: "/cabinet/contact", icon: MessageCircle },
   { id: "faq", label: "FAQ", href: "/cabinet/faq", icon: HelpCircle },
 ];
@@ -26,11 +27,14 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
+  const { userData, fetchProfile, isFetchingProfile, fetchProfileError } = useCabinetStore();
 
-  const user = {
-    name: "Иван Иванов",
-    email: "ivan@example.com",
-  };
+  useEffect(() => {
+    if (!userData && !isFetchingProfile && !fetchProfileError) {
+      fetchProfile().catch(console.error);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (pathname !== prevPathname) {
@@ -102,8 +106,8 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   <User className="h-6 w-6 text-[var(--color-golden)]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{user.name}</p>
-                  <p className="text-xs text-[var(--foreground)]/70 truncate">{user.email}</p>
+                  <p className="text-sm font-medium truncate">{userData?.name ?? "Загрузка..."}</p>
+                  <p className="text-xs text-[var(--foreground)]/70 truncate">{userData?.email ?? "Загрузка..."}</p>
                 </div>
               </div>
             </div>
@@ -181,6 +185,8 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      <ToastContainer />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Mail, MessageCircle, Copy, Check } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 const CONTACT_OPTIONS = [
   {
@@ -44,13 +45,38 @@ export default function ContactPage() {
     message: "",
   });
   const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Lead form submitted:", { ...formData, contactMethod });
-    setIsModalOpen(false);
-    setFormData({ subject: "", contact: "", message: "" });
-    setContactMethod("email");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/user-requests`, {
+        method: "POST",
+        body: JSON.stringify({
+          contactMethod,
+          contact: formData.contact,
+          subject: formData.subject,
+          message: formData.message,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message ?? "Ошибка при отправке заявки");
+      }
+
+      setIsModalOpen(false);
+      setFormData({ subject: "", contact: "", message: "" });
+      setContactMethod("email");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка при отправке заявки");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleContactClick = (href: string) => {
@@ -133,6 +159,12 @@ export default function ContactPage() {
               Заполните форму, и мы свяжемся с вами в ближайшее время
             </p>
           </div>
+
+          {error && (
+            <div className="p-3 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 rounded text-sm">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -239,8 +271,9 @@ export default function ContactPage() {
                 type="submit"
                 size="lg"
                 className="flex-1 uppercase tracking-wider"
+                disabled={isLoading}
               >
-                Отправить
+                {isLoading ? "Отправка..." : "Отправить"}
               </Button>
               <Button
                 type="button"
@@ -248,6 +281,7 @@ export default function ContactPage() {
                 size="lg"
                 onClick={() => setIsModalOpen(false)}
                 className="uppercase tracking-wider"
+                disabled={isLoading}
               >
                 Отмена
               </Button>

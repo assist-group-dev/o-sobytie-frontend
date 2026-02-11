@@ -8,6 +8,8 @@ import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { AuthModal } from "./AuthModal";
 import { useState, useEffect } from "react";
 import { cn } from "@/utils/cn";
+import { useAppStore } from "@/stores/useAppStore";
+import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 
 const NAV_LINKS = [
   { href: "#tariffs", label: "Тарифы" },
@@ -18,6 +20,8 @@ const NAV_LINKS = [
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user, isAuthenticated, setAuth } = useAppStore();
+  const { fetchProfile } = useCabinetStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +31,42 @@ export function Header() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (!token) {
+        setAuth(null);
+        return;
+      }
+
+      if (user?.role) {
+        return;
+      }
+
+      try {
+        await fetchProfile();
+        const profileData = useCabinetStore.getState().userData;
+        if (profileData) {
+          setAuth({
+            id: profileData.id,
+            email: profileData.email,
+            name: profileData.name,
+            role: profileData.role,
+          });
+        }
+      } catch (error) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+        }
+        setAuth(null);
+      }
+    };
+
+    if (!isAuthenticated || !user) {
+      checkAuth();
+    }
+  }, [isAuthenticated, user, setAuth]);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -82,17 +122,31 @@ export function Header() {
         {/* Actions */}
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button
-            variant="text"
-            className="flex items-center gap-2 uppercase tracking-wide text-sm font-medium group relative hover:text-[var(--color-golden)] transition-all duration-300"
-            onClick={() => setIsAuthModalOpen(true)}
-          >
-            <User className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-            <span className="relative">
-              Вход
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--color-golden)] transition-all duration-300 group-hover:w-full" />
-            </span>
-          </Button>
+          {isAuthenticated && user ? (
+            <Link
+              href="/cabinet"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-full bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 flex items-center justify-center">
+                <User className="h-4 w-4 text-[var(--color-golden)]" />
+              </div>
+              <span className="hidden sm:inline text-sm font-medium hover:text-[var(--color-golden)] transition-colors">
+                {user.name}
+              </span>
+            </Link>
+          ) : (
+            <Button
+              variant="text"
+              className="flex items-center gap-2 uppercase tracking-wide text-sm font-medium group relative hover:text-[var(--color-golden)] transition-all duration-300"
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              <User className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+              <span className="relative">
+                Вход
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[var(--color-golden)] transition-all duration-300 group-hover:w-full" />
+              </span>
+            </Button>
+          )}
         </div>
       </div>
 

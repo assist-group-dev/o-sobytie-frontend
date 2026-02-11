@@ -7,6 +7,7 @@ import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { SubscriptionPurchaseModal, SubscriptionFormData } from "./SubscriptionPurchaseModal";
 
 const maskEmail = (email: string): string => {
@@ -88,8 +89,16 @@ const TARIFFS: Tariff[] = [
   },
 ];
 
-export function SubscriptionCards() {
+interface SubscriptionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  isQuestionnaireCompleted: boolean;
+  onOpenQuestionnaire: () => void;
+}
+
+export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, onOpenQuestionnaire }: SubscriptionModalProps) {
   const { userData } = useCabinetStore();
+  const { addToast } = useToastStore();
   const [selectedTariff, setSelectedTariff] = useState<Tariff | null>(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [giftTariff, setGiftTariff] = useState<Tariff | null>(null);
@@ -97,6 +106,7 @@ export function SubscriptionCards() {
   const [copied, setCopied] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const [purchaseTariff, setPurchaseTariff] = useState<Tariff | null>(null);
+  const [isQuestionnaireRequiredModalOpen, setIsQuestionnaireRequiredModalOpen] = useState(false);
 
   const userEmail = (userData?.email as string) || "ivan@example.com";
   const maskedEmail = maskEmail(userEmail);
@@ -141,73 +151,88 @@ export function SubscriptionCards() {
       URL.revokeObjectURL(url);
     }
   };
+
+  const handleClose = () => {
+    setSelectedTariff(null);
+    onClose();
+  };
+
   return (
-    <div className="max-w-3xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-        {TARIFFS.map((tariff) => (
-          <div
-            key={tariff.id}
-            className="group cursor-pointer"
-            onClick={() => setSelectedTariff(tariff)}
-          >
-            <div className="relative aspect-square mb-6 overflow-hidden bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20">
-              <Image
-                src={tariff.image}
-                alt={tariff.title}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              {tariff.discount && (
-                <div className="absolute top-4 left-4">
-                  <span className="bg-[var(--color-golden)] text-black text-xs font-bold px-2 py-1 uppercase tracking-wider">
-                    {tariff.discount}
-                  </span>
-                </div>
-              )}
-              {!tariff.discount && tariff.id === "1-month" && (
-                <div className="absolute top-4 left-4">
-                  <span className="bg-[var(--color-cream)]/80 dark:bg-[var(--color-cream)]/60 text-[var(--foreground)] text-xs font-bold px-2 py-1 uppercase tracking-wider">
-                    Попробовать
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex flex-wrap items-start gap-2">
-                <h3 className="text-lg sm:text-xl font-bold uppercase whitespace-nowrap">{tariff.title}</h3>
-                <div className="text-right">
-                  {tariff.originalPrice ? (
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
-                      <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
+    <>
+      <Modal
+        isOpen={isOpen && selectedTariff === null}
+        onClose={handleClose}
+        className="p-0 max-w-7xl w-full mx-2 sm:mx-4 max-h-[98vh] sm:max-h-[90vh]"
+      >
+        <div className="p-4 sm:p-6 lg:p-8">
+          <h2 className="text-2xl sm:text-3xl font-bold uppercase mb-4 sm:mb-6">Выберите тариф</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+            {TARIFFS.map((tariff) => (
+              <div
+                key={tariff.id}
+                className="group cursor-pointer"
+                onClick={() => setSelectedTariff(tariff)}
+              >
+                <div className="relative aspect-square mb-6 overflow-hidden bg-[var(--color-cream)]/70 dark:bg-[var(--color-cream)]/20">
+                  <Image
+                    src={tariff.image}
+                    alt={tariff.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  {tariff.discount && (
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-[var(--color-golden)] text-black text-xs font-bold px-2 py-1 uppercase tracking-wider">
+                        {tariff.discount}
+                      </span>
                     </div>
-                  ) : (
-                    <span className="text-sm font-medium text-[var(--foreground)]/50">{tariff.price}</span>
+                  )}
+                  {!tariff.discount && tariff.id === "1-month" && (
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-[var(--color-cream)]/80 dark:bg-[var(--color-cream)]/60 text-[var(--foreground)] text-xs font-bold px-2 py-1 uppercase tracking-wider">
+                        Попробовать
+                      </span>
+                    </div>
                   )}
                 </div>
+                
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex flex-wrap items-start gap-2">
+                    <h3 className="text-lg sm:text-xl font-bold uppercase whitespace-nowrap">{tariff.title}</h3>
+                    <div className="text-right">
+                      {tariff.originalPrice ? (
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
+                          <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm font-medium text-[var(--foreground)]/50">{tariff.price}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs sm:text-sm text-[var(--foreground)]/60 line-clamp-2">
+                    {tariff.description}
+                  </p>
+                  
+                  <div className="pt-2">
+                    <Button
+                      variant="text"
+                      className="group/btn p-0 flex items-center gap-2 text-xs sm:text-sm uppercase font-bold tracking-wider hover:text-[var(--color-golden)]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTariff(tariff);
+                      }}
+                    >
+                      Подробнее <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover/btn:translate-x-1" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              
-              <p className="text-xs sm:text-sm text-[var(--foreground)]/60 line-clamp-2">
-                {tariff.description}
-              </p>
-              
-              <div className="pt-2">
-                <Button
-                  variant="text"
-                  className="group/btn p-0 flex items-center gap-2 text-xs sm:text-sm uppercase font-bold tracking-wider hover:text-[var(--color-golden)]"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedTariff(tariff);
-                  }}
-                >
-                  Подробнее <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform group-hover/btn:translate-x-1" />
-                </Button>
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={selectedTariff !== null}
@@ -257,9 +282,13 @@ export function SubscriptionCards() {
                 <Button 
                   size="lg" 
                   onClick={() => {
-                    setPurchaseTariff(selectedTariff);
-                    setIsPurchaseModalOpen(true);
-                    setSelectedTariff(null);
+                    if (isQuestionnaireCompleted) {
+                      setPurchaseTariff(selectedTariff);
+                      setIsPurchaseModalOpen(true);
+                      setSelectedTariff(null);
+                    } else {
+                      setIsQuestionnaireRequiredModalOpen(true);
+                    }
                   }}
                   className="w-full uppercase tracking-widest text-sm sm:text-base group/btn transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                 >
@@ -368,6 +397,7 @@ export function SubscriptionCards() {
           onClose={() => {
             setIsPurchaseModalOpen(false);
             setPurchaseTariff(null);
+            handleClose();
           }}
           tariff={{
             id: purchaseTariff.id,
@@ -411,12 +441,56 @@ export function SubscriptionCards() {
               apartment: data.apartment,
               phone: data.phone,
             });
+            
+            addToast({
+              type: "success",
+              message: "Подписка успешно оформлена! Мы свяжемся с вами для подтверждения заказа.",
+              duration: 5000,
+            });
+            
             setIsPurchaseModalOpen(false);
             setPurchaseTariff(null);
+            handleClose();
           }}
         />
       )}
-    </div>
+
+      <Modal
+        isOpen={isQuestionnaireRequiredModalOpen}
+        onClose={() => setIsQuestionnaireRequiredModalOpen(false)}
+        className="max-w-md"
+      >
+        <div className="p-6 sm:p-8">
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold uppercase mb-2">Анкетирование обязательно</h2>
+            <p className="text-sm text-[var(--foreground)]/70">
+              Для оформления подписки необходимо пройти анкетирование. Это поможет нам подобрать идеальные впечатления специально для вас.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            <Button
+              size="lg"
+              onClick={() => {
+                setIsQuestionnaireRequiredModalOpen(false);
+                setSelectedTariff(null);
+                onOpenQuestionnaire();
+              }}
+              className="uppercase tracking-wider w-full sm:flex-1"
+            >
+              Пройти анкету
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setIsQuestionnaireRequiredModalOpen(false)}
+              className="uppercase tracking-wider w-full sm:flex-1"
+            >
+              Отмена
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }
 

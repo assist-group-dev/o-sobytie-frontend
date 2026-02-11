@@ -1,7 +1,7 @@
 "use client";
 
-import { useToastStore } from "@/app/(admin)/stores/useToastStore";
-import { Toast } from "@/app/(admin)/components/Toast";
+import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
+import { Toast } from "@/app/(cabinet)/components/Toast";
 
 export function ToastContainer() {
   const { toasts, removeToast } = useToastStore();
