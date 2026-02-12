@@ -62,10 +62,6 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
   const userEmail = (userData?.email as string) ?? "";
   const maskedEmail = userEmail ? maskEmail(userEmail) : "";
 
-  const generatePromoCode = () => {
-    return `GIFT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-  };
-
   const handleBuyAsGift = () => {
     if (selectedTariff) {
       router.push(`/gift/checkout?durationId=${encodeURIComponent(selectedTariff.id)}`);

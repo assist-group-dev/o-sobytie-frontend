@@ -39,12 +39,9 @@ export function SubscriptionCards() {
     });
   }, []);
 
+  const router = useRouter();
   const userEmail = (userData?.email as string) ?? "";
   const maskedEmail = userEmail ? maskEmail(userEmail) : "";
-
-  const generatePromoCode = () => {
-    return `GIFT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-  };
 
   const handleBuyAsGift = () => {
     if (selectedTariff) {
