@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
@@ -8,7 +9,7 @@ import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
-import { fetchTariffs, type TariffCard } from "@/app/(landing)/utils/tariffs";
+import { fetchTariffs, formatPrice, type TariffCard } from "@/app/(landing)/utils/tariffs";
 
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
@@ -27,8 +28,18 @@ interface SubscriptionModalProps {
   onOpenQuestionnaire: () => void;
 }
 
+function tariffDisplayPrice(tariff: TariffCard, appliedPromo: { durationId: string; discountPercent: number } | null) {
+  const applies = appliedPromo != null && appliedPromo.durationId === tariff.id;
+  if (applies) {
+    const discounted = Math.round(tariff.priceNumeric * (1 - appliedPromo.discountPercent / 100));
+    return { price: formatPrice(discounted), originalPrice: tariff.price, fromPromo: true };
+  }
+  return { price: tariff.price, originalPrice: tariff.originalPrice, fromPromo: false };
+}
+
 export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, onOpenQuestionnaire }: SubscriptionModalProps) {
-  const { userData } = useCabinetStore();
+  const router = useRouter();
+  const { userData, appliedPromos } = useCabinetStore();
   const { addToast } = useToastStore();
   const [tariffs, setTariffs] = useState<TariffCard[]>([]);
   const [tariffsLoading, setTariffsLoading] = useState(true);
@@ -57,10 +68,7 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
 
   const handleBuyAsGift = () => {
     if (selectedTariff) {
-      const code = generatePromoCode();
-      setPromoCode(code);
-      setGiftTariff(selectedTariff);
-      setIsGiftModalOpen(true);
+      router.push(`/gift/checkout?durationId=${encodeURIComponent(selectedTariff.id)}`);
       setSelectedTariff(null);
     }
   };
@@ -110,7 +118,10 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
             <p className="text-[var(--foreground)]/70 py-6">Загрузка тарифов…</p>
           ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-            {tariffs.map((tariff) => (
+            {tariffs.map((tariff) => {
+              const promoForTariff = appliedPromos.find((p) => p.durationId === tariff.id) ?? null;
+              const { price, originalPrice, fromPromo } = tariffDisplayPrice(tariff, promoForTariff);
+              return (
               <div
                 key={tariff.id}
                 className="group cursor-pointer"
@@ -126,14 +137,19 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
                   ) : (
                     <div className="w-full h-full bg-[var(--color-cream)]/50" />
                   )}
-                  {tariff.discount && (
+                  {fromPromo ? (
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-[var(--color-golden)] text-black text-xs font-bold px-2 py-1 uppercase tracking-wider">
+                        Скидка по промокоду
+                      </span>
+                    </div>
+                  ) : tariff.discount ? (
                     <div className="absolute top-4 left-4">
                       <span className="bg-[var(--color-golden)] text-black text-xs font-bold px-2 py-1 uppercase tracking-wider">
                         {tariff.discount}
                       </span>
                     </div>
-                  )}
-                  {!tariff.discount && (
+                  ) : (
                     <div className="absolute top-4 left-4">
                       <span className="bg-[var(--color-cream)]/80 dark:bg-[var(--color-cream)]/60 text-[var(--foreground)] text-xs font-bold px-2 py-1 uppercase tracking-wider">
                         Попробовать
@@ -146,13 +162,13 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
                   <div className="flex flex-wrap items-start gap-2">
                     <h3 className="text-lg sm:text-xl font-bold uppercase whitespace-nowrap">{tariff.title}</h3>
                     <div className="text-right">
-                      {tariff.originalPrice ? (
+                      {originalPrice != null ? (
                         <div className="flex items-center gap-1.5 sm:gap-2">
-                          <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
-                          <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
+                          <span className="text-xs line-through text-[var(--foreground)]/40">{originalPrice}</span>
+                          <span className="text-sm font-bold text-[var(--color-golden)]">{price}</span>
                         </div>
                       ) : (
-                        <span className="text-sm font-medium text-[var(--foreground)]/50">{tariff.price}</span>
+                        <span className="text-sm font-medium text-[var(--foreground)]/50">{price}</span>
                       )}
                     </div>
                   </div>
@@ -175,7 +191,8 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
           )}
         </div>
@@ -207,19 +224,27 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold uppercase mb-3 sm:mb-4">{selectedTariff.title}</h2>
                 
                 <div className="mb-4 sm:mb-6">
-                  {selectedTariff.originalPrice ? (
-                    <div className="flex flex-col gap-1.5 sm:gap-2">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <span className="text-base sm:text-lg line-through text-[var(--foreground)]/40">{selectedTariff.originalPrice}</span>
-                        <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{selectedTariff.price}</span>
-                      </div>
-                      {selectedTariff.discount && (
-                        <span className="text-xs sm:text-sm font-medium text-[var(--color-golden)]">{selectedTariff.discount}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{selectedTariff.price}</span>
-                  )}
+                  {(() => {
+                    const promoForSelected = appliedPromos.find((p) => p.durationId === selectedTariff.id) ?? null;
+                    const { price, originalPrice, fromPromo } = tariffDisplayPrice(selectedTariff, promoForSelected);
+                    if (originalPrice != null) {
+                      return (
+                        <div className="flex flex-col gap-1.5 sm:gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className="text-base sm:text-lg line-through text-[var(--foreground)]/40">{originalPrice}</span>
+                            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{price}</span>
+                          </div>
+                          {fromPromo && promoForSelected != null && (
+                            <span className="text-xs sm:text-sm font-medium text-[var(--color-golden)]">Скидка {promoForSelected.discountPercent}% по промокоду</span>
+                          )}
+                          {!fromPromo && selectedTariff.discount && (
+                            <span className="text-xs sm:text-sm font-medium text-[var(--color-golden)]">{selectedTariff.discount}</span>
+                          )}
+                        </div>
+                      );
+                    }
+                    return <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{price}</span>;
+                  })()}
                 </div>
 
                 <p className="text-sm sm:text-base lg:text-lg text-[var(--foreground)]/80 leading-relaxed mb-0 sm:mb-6 whitespace-pre-line">
@@ -352,6 +377,7 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
             id: purchaseTariff.id,
             title: purchaseTariff.title,
             price: purchaseTariff.price,
+            priceNumeric: purchaseTariff.priceNumeric,
           }}
           onSuccess={async () => {
             const { fetchProfile } = useCabinetStore.getState();

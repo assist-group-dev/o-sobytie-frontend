@@ -43,6 +43,14 @@ interface UserProfile {
   questionnaireCompleted?: boolean;
   questionnaire?: QuestionnaireData | null;
   subscription?: SubscriptionFromApi | null;
+  appliedPromos?: AppliedPromo[];
+}
+
+export interface AppliedPromo {
+  code: string;
+  discountPercent: number;
+  durationId: string;
+  promocodeId?: string;
 }
 
 interface CabinetState {
@@ -50,6 +58,10 @@ interface CabinetState {
   setUserData: (data: UserProfile | null) => void;
   subscription: SubscriptionFromApi | null;
   setSubscription: (subscription: SubscriptionFromApi | null) => void;
+  appliedPromos: AppliedPromo[];
+  setAppliedPromos: (promos: AppliedPromo[]) => void;
+  addOrReplaceAppliedPromo: (promo: AppliedPromo) => void;
+  removeAppliedPromoByDurationId: (durationId: string) => void;
   fetchProfile: () => Promise<void>;
   updateProfile: (data: { name?: string; phone?: string; avatar?: string }) => Promise<void>;
   isFetchingProfile: boolean;
@@ -63,6 +75,14 @@ export const useCabinetStore = create<CabinetState>()(
       setUserData: (data) => set({ userData: data, fetchProfileError: false }),
       subscription: null,
       setSubscription: (subscription) => set({ subscription }),
+      appliedPromos: [],
+      setAppliedPromos: (promos) => set({ appliedPromos: promos }),
+      addOrReplaceAppliedPromo: (promo) =>
+        set((state) => ({
+          appliedPromos: [...state.appliedPromos.filter((p) => p.durationId !== promo.durationId), promo],
+        })),
+      removeAppliedPromoByDurationId: (durationId) =>
+        set((state) => ({ appliedPromos: state.appliedPromos.filter((p) => p.durationId !== durationId) })),
       isFetchingProfile: false,
       fetchProfileError: false,
       fetchProfile: async () => {
@@ -93,10 +113,12 @@ export const useCabinetStore = create<CabinetState>()(
             questionnaireCompleted: data.questionnaireCompleted ?? false,
             questionnaire: data.questionnaire ?? null,
             subscription: data.subscription ?? null,
+            appliedPromos: data.appliedPromos ?? [],
           };
           set({
             userData,
             subscription: data.subscription ?? null,
+            appliedPromos: data.appliedPromos ?? [],
             isFetchingProfile: false,
             fetchProfileError: false,
           });
@@ -109,7 +131,10 @@ export const useCabinetStore = create<CabinetState>()(
       updateProfile: async (data) => {
         try {
           const response = await api.patch<UserProfile>("/users/profile", data);
-          set({ userData: response.data });
+          set({
+            userData: response.data,
+            appliedPromos: response.data.appliedPromos ?? [],
+          });
         } catch (error) {
           console.error("Failed to update profile:", error);
           throw error;
@@ -121,6 +146,7 @@ export const useCabinetStore = create<CabinetState>()(
       partialize: (state) => ({
         userData: state.userData,
         subscription: state.subscription,
+        appliedPromos: state.appliedPromos,
       }),
     }
   )

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
@@ -47,10 +48,7 @@ export function SubscriptionCards() {
 
   const handleBuyAsGift = () => {
     if (selectedTariff) {
-      const code = generatePromoCode();
-      setPromoCode(code);
-      setGiftTariff(selectedTariff);
-      setIsGiftModalOpen(true);
+      router.push(`/gift/checkout?durationId=${encodeURIComponent(selectedTariff.id)}`);
       setSelectedTariff(null);
     }
   };
@@ -322,6 +320,7 @@ export function SubscriptionCards() {
             id: purchaseTariff.id,
             title: purchaseTariff.title,
             price: purchaseTariff.price,
+            priceNumeric: purchaseTariff.priceNumeric,
           }}
           onSuccess={async () => {
             const { fetchProfile } = useCabinetStore.getState();

@@ -10,6 +10,8 @@ import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
 import { ToastContainer } from "@/app/(cabinet)/components/ToastContainer";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 interface CabinetLayoutProps {
   children: React.ReactNode;
@@ -21,13 +23,17 @@ const navigation = [
   { id: "faq", label: "FAQ", href: "/cabinet/faq", icon: HelpCircle },
 ];
 
+const PENDING_PROMO_KEY = "pending_promo";
+
 function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const pathname = usePathname();
   const [promoCode, setPromoCode] = useState("");
+  const [isPromoValidating, setIsPromoValidating] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const { userData, fetchProfile, isFetchingProfile, fetchProfileError } = useCabinetStore();
+  const { userData, fetchProfile, isFetchingProfile, fetchProfileError, appliedPromos, addOrReplaceAppliedPromo } = useCabinetStore();
+  const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
     if (!userData && !isFetchingProfile && !fetchProfileError) {
@@ -35,6 +41,21 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? sessionStorage.getItem(PENDING_PROMO_KEY) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as { code: string; discountPercent: number; durationId?: string };
+        if (parsed?.code != null && typeof parsed.discountPercent === "number" && parsed.durationId != null) {
+          addOrReplaceAppliedPromo({ code: parsed.code, discountPercent: parsed.discountPercent, durationId: parsed.durationId });
+          sessionStorage.removeItem(PENDING_PROMO_KEY);
+        }
+      }
+    } catch {
+      sessionStorage.removeItem(PENDING_PROMO_KEY);
+    }
+  }, [addOrReplaceAppliedPromo]);
 
   useEffect(() => {
     if (pathname !== prevPathname) {
@@ -55,8 +76,41 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
     }
   }, [pathname, prevPathname]);
 
-  const handlePromoSubmit = (e: React.FormEvent) => {
+  const handlePromoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const code = promoCode.trim();
+    if (!code) return;
+    setIsPromoValidating(true);
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/promocodes/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      if (!response.ok) {
+        const err = (await response.json()) as { message?: string };
+        addToast({ type: "error", message: err.message ?? "Промокод недействителен" });
+        return;
+      }
+      const data = (await response.json()) as {
+        valid: true;
+        discountPercent: number;
+        durationId: string;
+        promocodeId: string;
+      };
+      addOrReplaceAppliedPromo({
+        code,
+        discountPercent: data.discountPercent,
+        durationId: data.durationId,
+        promocodeId: data.promocodeId,
+      });
+      addToast({ type: "success", message: `Скидка ${data.discountPercent}% применена для выбранного периода` });
+      setPromoCode("");
+    } catch {
+      addToast({ type: "error", message: "Ошибка проверки промокода" });
+    } finally {
+      setIsPromoValidating(false);
+    }
   };
 
   return (
@@ -145,12 +199,18 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   <Ticket className="h-3 w-3" />
                   Есть промокод?
                 </p>
+                {appliedPromos.length > 0 && (
+                  <p className="text-xs text-[var(--color-golden)] mb-1">
+                    Применено промокодов: {appliedPromos.length}
+                  </p>
+                )}
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Введите код"
+                    disabled={isPromoValidating}
                     className={cn(
                       "flex-1 px-3 py-1.5 text-sm border border-[var(--color-cream)]/70 dark:border-[var(--color-cream)]/20",
                       "bg-[var(--background)] text-[var(--foreground)]",
@@ -159,12 +219,13 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   />
                   <button
                     type="submit"
+                    disabled={isPromoValidating}
                     className={cn(
                       "px-3 py-1.5 text-sm font-medium transition-colors",
-                      "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
+                      "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90 disabled:opacity-50"
                     )}
                   >
-                    OK
+                    {isPromoValidating ? "..." : "OK"}
                   </button>
                 </div>
               </form>

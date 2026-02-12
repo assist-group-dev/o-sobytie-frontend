@@ -6,11 +6,14 @@ import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
 import { cn } from "@/utils/cn";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
+import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { formatPrice } from "@/app/(landing)/utils/tariffs";
 
 interface Tariff {
   id: string;
   title: string;
   price: string;
+  priceNumeric: number;
 }
 
 interface SubscriptionPurchaseModalProps {
@@ -43,6 +46,17 @@ export function SubscriptionPurchaseModal({
   tariff,
   onSuccess,
 }: SubscriptionPurchaseModalProps) {
+  const { appliedPromos, removeAppliedPromoByDurationId } = useCabinetStore();
+  const appliedPromoForTariff = appliedPromos.find((p) => p.durationId === tariff.id) ?? null;
+  const applies = appliedPromoForTariff != null;
+  const displayPrice = applies
+    ? formatPrice(
+        Math.round(
+          tariff.priceNumeric * (1 - (appliedPromoForTariff?.discountPercent ?? 0) / 100)
+        )
+      )
+    : tariff.price;
+  const originalPrice = applies ? tariff.price : undefined;
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<SubscriptionFormData>({
     city: "",
@@ -88,23 +102,30 @@ export function SubscriptionPurchaseModal({
     setSubmitError(null);
     setIsSubmitting(true);
     try {
+      const currentPromo = useCabinetStore.getState().appliedPromos.find((p) => p.durationId === tariff.id) ?? null;
+      const body: Record<string, string> = {
+        durationId: tariff.id,
+        city: formData.city.trim(),
+        street: formData.street.trim(),
+        house: formData.house.trim(),
+        apartment: (formData.apartment ?? "").trim(),
+        phone: formData.phone.trim(),
+        deliveryDate: formData.deliveryDate,
+        deliveryTime: formData.deliveryTime,
+      };
+      if (currentPromo?.code != null && currentPromo.code.trim() !== "") {
+        body.promoCode = currentPromo.code.trim();
+      }
       const response = await fetchWithAuth(`${API_BASE_URL}/subscriptions`, {
         method: "POST",
-        body: JSON.stringify({
-          durationId: tariff.id,
-          city: formData.city.trim(),
-          street: formData.street.trim(),
-          house: formData.house.trim(),
-          apartment: (formData.apartment ?? "").trim(),
-          phone: formData.phone.trim(),
-          deliveryDate: formData.deliveryDate,
-          deliveryTime: formData.deliveryTime,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
       if (!response.ok) {
         const err = (await response.json()) as { message?: string };
         throw new Error(err.message ?? "Ошибка оформления подписки");
       }
+      removeAppliedPromoByDurationId(tariff.id);
       onSuccess?.();
       onClose();
       setCurrentStep(0);
@@ -307,8 +328,25 @@ export function SubscriptionPurchaseModal({
               Оформление подписки
             </h2>
             <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
-              <span className="whitespace-nowrap">{tariff.title}</span> • {tariff.price}
+              <span className="whitespace-nowrap">{tariff.title}</span>
+              {originalPrice != null ? (
+                <>
+                  {" "}
+                  <span className="line-through text-[var(--foreground)]/50">{originalPrice}</span>
+                  {" "}
+                  <span className="font-semibold text-[var(--color-golden)]">{displayPrice}</span>
+                </>
+              ) : (
+                <> • {displayPrice}</>
+              )}
             </p>
+            {(appliedPromoForTariff != null || appliedPromos.length > 0) && (
+              <p className="text-xs mt-1 text-[var(--color-golden)]">
+                {appliedPromoForTariff != null
+                  ? `Промокод ${appliedPromoForTariff.code} применён, скидка будет учтена при оформлении.`
+                  : "У вас применены промокоды для других сроков — выберите подходящий тариф для учёта скидки."}
+              </p>
+            )}
           </div>
           <div className="mb-2">
             <div className="h-2 bg-[var(--color-cream)]/30 dark:bg-[var(--color-cream)]/20 overflow-hidden">

@@ -1,36 +1,30 @@
 "use client";
 
-import { Trash2, Infinity } from "lucide-react";
+import { Power, PowerOff } from "lucide-react";
 import { Modal } from "@/ui/components/Modal";
 import { Card } from "@/ui/components/Card";
 import { Button } from "@/ui/components/Button";
 import { cn } from "@/utils/cn";
-
-interface Promocode {
-  id: string;
-  code: string;
-  tariff: string;
-  duration: string;
-  discount: string;
-  isUnlimited: boolean;
-  usedCount: number;
-  limit: number | null;
-  isClient: boolean;
-}
+import type { PromocodeFromApi } from "@/app/(admin)/admin/promocodes/page";
 
 interface PromocodeDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  promocode: Promocode | null;
-  onDelete?: (promocodeId: string) => void;
+  promocode: PromocodeFromApi | null;
+  onToggleActive?: (id: string, isActive: boolean) => void;
 }
 
-export function PromocodeDetailModal({ isOpen, onClose, promocode, onDelete }: PromocodeDetailModalProps) {
+export function PromocodeDetailModal({
+  isOpen,
+  onClose,
+  promocode,
+  onToggleActive,
+}: PromocodeDetailModalProps) {
   if (!promocode) return null;
 
-  const handleDeleteClick = () => {
-    if (onDelete) {
-      onDelete(promocode.id);
+  const handleToggle = () => {
+    if (onToggleActive) {
+      onToggleActive(promocode.id, !promocode.isActive);
     }
   };
 
@@ -45,63 +39,104 @@ export function PromocodeDetailModal({ isOpen, onClose, promocode, onDelete }: P
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Код</p>
-                <p className="font-medium text-lg">{promocode.code}</p>
-              </div>
-              <div>
-                <p className="text-sm text-[var(--foreground)]/60 mb-1">Тариф</p>
-                <p className="font-medium">{promocode.tariff}</p>
-              </div>
-              <div>
-                <p className="text-sm text-[var(--foreground)]/60 mb-1">Срок</p>
-                <p className="font-medium">{promocode.duration}</p>
-              </div>
-              <div>
-                <p className="text-sm text-[var(--foreground)]/60 mb-1">Размер скидки</p>
-                <p className="font-medium text-lg text-[var(--color-golden)]">{promocode.discount}</p>
-              </div>
-              <div>
-                <p className="text-sm text-[var(--foreground)]/60 mb-1">Использование</p>
-                {promocode.isUnlimited ? (
-                  <div className="flex items-center gap-2">
-                    <Infinity className="h-5 w-5 text-[var(--color-golden)]" />
-                    <span className="font-medium">Бесконечный</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-lg">{promocode.usedCount}/{promocode.limit}</span>
-                    <span className="text-xs text-[var(--foreground)]/60">
-                      {promocode.usedCount >= (promocode.limit || 0) ? "(Использован)" : "(Доступен)"}
-                    </span>
-                  </div>
-                )}
+                <p className="font-medium text-lg font-mono">{promocode.code}</p>
               </div>
               <div>
                 <p className="text-sm text-[var(--foreground)]/60 mb-1">Тип</p>
                 <span
                   className={cn(
                     "px-2 py-1 text-xs rounded inline-block",
-                    promocode.isClient
+                    promocode.type === "gift"
                       ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
                       : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
                   )}
                 >
-                  {promocode.isClient ? "Клиентский" : "Админский"}
+                  {promocode.type === "gift" ? "Клиентский" : "Админский"}
                 </span>
+              </div>
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Тариф</p>
+                <p className="font-medium">{promocode.premiumLevelName || "—"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Срок</p>
+                <p className="font-medium">{promocode.durationName || "—"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Размер скидки</p>
+                <p className="font-medium text-lg text-[var(--color-golden)]">{promocode.discountPercent}%</p>
+              </div>
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Использование</p>
+                <p className="font-medium">
+                  {promocode.maxActivations == null
+                    ? "Без лимита"
+                    : `${promocode.usedCount} / ${promocode.maxActivations}`}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Статус</p>
+                <span
+                  className={cn(
+                    "px-2 py-1 text-xs rounded inline-block",
+                    promocode.isActive
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  )}
+                >
+                  {promocode.isActive ? "Активен" : "Неактивен"}
+                </span>
+              </div>
+              {promocode.expiresAt != null && promocode.expiresAt !== "" && (
+                <div>
+                  <p className="text-sm text-[var(--foreground)]/60 mb-1">Срок действия до</p>
+                  <p className="font-medium">
+                    {new Date(promocode.expiresAt).toLocaleDateString("ru-RU", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-[var(--foreground)]/60 mb-1">Дата создания</p>
+                <p className="font-medium">
+                  {new Date(promocode.createdAt).toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
           </Card>
         </div>
 
-        {onDelete && (
+        {onToggleActive && promocode.type === "admin" && (
           <div className="mt-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
             <Button
               type="button"
               variant="outline"
-              onClick={handleDeleteClick}
-              className="w-full sm:w-auto border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center gap-2"
+              onClick={handleToggle}
+              className={cn(
+                "flex items-center justify-center gap-2",
+                promocode.isActive
+                  ? "border-orange-500 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                  : "border-green-500 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+              )}
             >
-              <Trash2 className="h-4 w-4" />
-              Удалить промокод
+              {promocode.isActive ? (
+                <>
+                  <PowerOff className="h-4 w-4" />
+                  Деактивировать
+                </>
+              ) : (
+                <>
+                  <Power className="h-4 w-4" />
+                  Активировать
+                </>
+              )}
             </Button>
           </div>
         )}
@@ -109,4 +144,3 @@ export function PromocodeDetailModal({ isOpen, onClose, promocode, onDelete }: P
     </Modal>
   );
 }
-

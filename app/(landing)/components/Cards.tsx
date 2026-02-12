@@ -1,13 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
+import { ArrowRight, Gift, Copy, Download, Check, Mail, Ticket } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { AuthModal } from "./AuthModal";
-import { fetchTariffs, type TariffCard } from "@/app/(landing)/utils/tariffs";
+import { fetchTariffs, formatPrice, type TariffCard } from "@/app/(landing)/utils/tariffs";
+import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
+
+const PENDING_PROMO_KEY = "pending_promo";
+
+function tariffDisplayPrice(
+  tariff: TariffCard,
+  appliedPromo: { durationId: string; discountPercent: number } | null
+) {
+  const applies = appliedPromo != null && appliedPromo.durationId === tariff.id;
+  if (applies) {
+    const discounted = Math.round(tariff.priceNumeric * (1 - appliedPromo.discountPercent / 100));
+    return { price: formatPrice(discounted), originalPrice: tariff.price, fromPromo: true };
+  }
+  return { price: tariff.price, originalPrice: tariff.originalPrice, fromPromo: false };
+}
 
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
@@ -19,8 +35,11 @@ const maskEmail = (email: string): string => {
   return `${visibleStart}***${visibleEnd}@${domain}`;
 };
 
+type AppliedPromoDisplay = { code: string; discountPercent: number; durationId: string };
+
 export function Cards() {
-  const { userData } = useCabinetStore();
+  const router = useRouter();
+  const { userData, appliedPromos, addOrReplaceAppliedPromo } = useCabinetStore();
   const [tariffs, setTariffs] = useState<TariffCard[]>([]);
   const [tariffsLoading, setTariffsLoading] = useState(true);
   const [selectedTariff, setSelectedTariff] = useState<TariffCard | null>(null);
@@ -31,8 +50,18 @@ export function Cards() {
   const [userEmail, setUserEmail] = useState("");
   const [copied, setCopied] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromoLanding, setAppliedPromoLanding] = useState<AppliedPromoDisplay | null>(null);
+  const [isPromoValidating, setIsPromoValidating] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const isAuthenticated = userData !== null;
+  const getEffectivePromoForTariff = (durationId: string): AppliedPromoDisplay | null =>
+    isAuthenticated
+      ? (appliedPromos.find((p) => p.durationId === durationId) ?? null)
+      : appliedPromoLanding != null && appliedPromoLanding.durationId === durationId
+        ? appliedPromoLanding
+        : null;
   const email = isAuthenticated ? (userData.email as string) : userEmail;
   const maskedEmail = email ? maskEmail(email) : "";
 
@@ -49,15 +78,10 @@ export function Cards() {
 
   const handleBuyAsGift = () => {
     if (selectedTariff) {
-      setGiftTariff(selectedTariff);
-      if (isAuthenticated) {
-        const code = generatePromoCode();
-        setPromoCode(code);
-        setIsGiftModalOpen(true);
-      } else {
-        setIsEmailModalOpen(true);
-      }
+      router.push(`/gift/checkout?durationId=${encodeURIComponent(selectedTariff.id)}`);
       setSelectedTariff(null);
+      setAppliedPromoLanding(null);
+      setPromoInput("");
     }
   };
 
@@ -97,6 +121,74 @@ export function Cards() {
       URL.revokeObjectURL(url);
     }
   };
+
+  const handleApplyPromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = promoInput.trim();
+    if (!code || !selectedTariff) return;
+    setPromoError(null);
+    setIsPromoValidating(true);
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/promocodes/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, durationId: selectedTariff.id }),
+      });
+      if (!response.ok) {
+        const err = (await response.json()) as { message?: string };
+        setPromoError(err.message ?? "Промокод недействителен");
+        setAppliedPromoLanding(null);
+        return;
+      }
+      const data = (await response.json()) as {
+        valid: true;
+        discountPercent: number;
+        durationId: string;
+        promocodeId?: string;
+      };
+      const promoPayload = {
+        code,
+        discountPercent: data.discountPercent,
+        durationId: data.durationId,
+        ...(data.promocodeId != null ? { promocodeId: data.promocodeId } : {}),
+      };
+      if (isAuthenticated) {
+        addOrReplaceAppliedPromo(promoPayload);
+      } else {
+        setAppliedPromoLanding({
+          code: promoPayload.code,
+          discountPercent: promoPayload.discountPercent,
+          durationId: promoPayload.durationId,
+        });
+      }
+      setPromoError(null);
+    } catch {
+      setPromoError("Ошибка проверки промокода");
+      setAppliedPromoLanding(null);
+    } finally {
+      setIsPromoValidating(false);
+    }
+  };
+
+  const handleOpenAuthForSubscribe = () => {
+    if (appliedPromoLanding != null && selectedTariff != null) {
+      try {
+        sessionStorage.setItem(
+          PENDING_PROMO_KEY,
+          JSON.stringify({
+            code: appliedPromoLanding.code,
+            discountPercent: appliedPromoLanding.discountPercent,
+            durationId: selectedTariff.id,
+          })
+        );
+      } catch {
+        sessionStorage.removeItem(PENDING_PROMO_KEY);
+      }
+    }
+    setIsAuthModalOpen(true);
+    setSelectedTariff(null);
+  };
+
   return (
     <section id="tariffs" className="pt-12 pb-20 bg-[var(--background)]">
       <div className="container mx-auto px-4">
@@ -140,18 +232,21 @@ export function Cards() {
                 )}
               </div>
               
-              <div className="space-y-3">
+                <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <h3 className="text-xl font-bold uppercase">{tariff.title}</h3>
                   <div className="text-right">
-                    {tariff.originalPrice ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs line-through text-[var(--foreground)]/40">{tariff.originalPrice}</span>
-                        <span className="text-sm font-bold text-[var(--color-golden)]">{tariff.price}</span>
-                      </div>
-                    ) : (
-                      <span className="text-sm font-medium text-[var(--foreground)]/50">{tariff.price}</span>
-                    )}
+                    {(() => {
+                      const { price, originalPrice } = tariffDisplayPrice(tariff, getEffectivePromoForTariff(tariff.id));
+                      return originalPrice != null ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs line-through text-[var(--foreground)]/40">{originalPrice}</span>
+                          <span className="text-sm font-bold text-[var(--color-golden)]">{price}</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm font-medium text-[var(--foreground)]/50">{price}</span>
+                      );
+                    })()}
                   </div>
                 </div>
                 
@@ -180,7 +275,11 @@ export function Cards() {
 
       <Modal
         isOpen={selectedTariff !== null}
-        onClose={() => setSelectedTariff(null)}
+        onClose={() => {
+          setSelectedTariff(null);
+          setPromoInput("");
+          setPromoError(null);
+        }}
         className="p-0 max-w-7xl w-full mx-2 sm:mx-4 max-h-[98vh] sm:max-h-[90vh]"
       >
         {selectedTariff && (
@@ -204,19 +303,27 @@ export function Cards() {
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold uppercase mb-3 sm:mb-4">{selectedTariff.title}</h2>
                 
                 <div className="mb-4 sm:mb-6">
-                  {selectedTariff.originalPrice ? (
-                    <div className="flex flex-col gap-1.5 sm:gap-2">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <span className="text-base sm:text-lg line-through text-[var(--foreground)]/40">{selectedTariff.originalPrice}</span>
-                        <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{selectedTariff.price}</span>
-                      </div>
-                      {selectedTariff.discount && (
-                        <span className="text-xs sm:text-sm font-medium text-[var(--color-golden)]">{selectedTariff.discount}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{selectedTariff.price}</span>
-                  )}
+                  {(() => {
+                    const promoForSelected = getEffectivePromoForTariff(selectedTariff.id);
+                    const { price, originalPrice, fromPromo } = tariffDisplayPrice(selectedTariff, promoForSelected);
+                    if (originalPrice != null) {
+                      return (
+                        <div className="flex flex-col gap-1.5 sm:gap-2">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className="text-base sm:text-lg line-through text-[var(--foreground)]/40">{originalPrice}</span>
+                            <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{price}</span>
+                          </div>
+                          {fromPromo && promoForSelected != null && (
+                            <span className="text-xs sm:text-sm font-medium text-[var(--color-golden)]">Скидка {promoForSelected.discountPercent}% по промокоду</span>
+                          )}
+                          {!fromPromo && selectedTariff.discount && (
+                            <span className="text-xs sm:text-sm font-medium text-[var(--color-golden)]">{selectedTariff.discount}</span>
+                          )}
+                        </div>
+                      );
+                    }
+                    return <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-[var(--color-golden)]">{price}</span>;
+                  })()}
                 </div>
 
                 <p className="text-sm sm:text-base lg:text-lg text-[var(--foreground)]/80 leading-relaxed mb-0 sm:mb-6 whitespace-pre-line">
@@ -225,12 +332,40 @@ export function Cards() {
               </div>
 
               <div className="mt-auto pt-2 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 space-y-2 sm:space-y-3">
+                {selectedTariff && (
+                  <form onSubmit={handleApplyPromo} className="space-y-2 mb-4">
+                    <p className="text-xs font-medium text-[var(--foreground)]/70 flex items-center gap-1">
+                      <Ticket className="h-3 w-3" />
+                      Промокод
+                    </p>
+                    {selectedTariff != null && getEffectivePromoForTariff(selectedTariff.id) != null && (
+                      <p className="text-xs text-[var(--color-golden)]">Скидка {getEffectivePromoForTariff(selectedTariff.id)!.discountPercent}% применена</p>
+                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value)}
+                        placeholder="Введите код"
+                        disabled={isPromoValidating}
+                        className={cn(
+                          "flex-1 px-3 py-2 text-sm border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
+                          "bg-[var(--background)] text-[var(--foreground)]",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50"
+                        )}
+                      />
+                      <Button type="submit" size="sm" disabled={isPromoValidating}>
+                        {isPromoValidating ? "..." : "Применить"}
+                      </Button>
+                    </div>
+                    {promoError != null && <p className="text-xs text-red-500">{promoError}</p>}
+                  </form>
+                )}
                 <Button 
                   size="lg" 
                   onClick={() => {
                     if (!isAuthenticated) {
-                      setIsAuthModalOpen(true);
-                      setSelectedTariff(null);
+                      handleOpenAuthForSubscribe();
                     }
                   }}
                   className="w-full uppercase tracking-widest text-sm sm:text-base group/btn transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"

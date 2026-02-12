@@ -19,12 +19,13 @@ export interface TariffCard {
   description: string;
   fullDescription: string;
   price: string;
+  priceNumeric: number;
   originalPrice: string | undefined;
   discount: string | undefined;
   image: string;
 }
 
-function formatPrice(value: number): string {
+export function formatPrice(value: number): string {
   return `${value.toLocaleString("ru-RU")} ₽`;
 }
 
@@ -40,6 +41,7 @@ export function mapTariffApiToCard(item: TariffApiItem): TariffCard {
     description: item.description ?? "",
     fullDescription: item.description ?? "",
     price: formatPrice(item.price),
+    priceNumeric: item.price,
     originalPrice:
       item.discountPercent > 0 ? formatPrice(item.originalPrice) : undefined,
     discount:
