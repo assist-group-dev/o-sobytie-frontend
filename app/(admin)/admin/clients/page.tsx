@@ -57,6 +57,10 @@ export interface SubscriptionPatchPayload {
   deliveryTime: string;
 }
 
+export type ClientSaveData = Omit<Partial<Client>, "subscription"> & {
+  subscription?: SubscriptionPatchPayload;
+};
+
 interface Client {
   id: string;
   name: string;
@@ -166,7 +170,7 @@ export default function ClientsPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSave = async (data: Partial<Client> & { subscription?: SubscriptionPatchPayload }) => {
+  const handleSave = async (data: ClientSaveData) => {
     if (!selectedClient) return;
     const hasClientUpdate =
       data.name !== undefined ||

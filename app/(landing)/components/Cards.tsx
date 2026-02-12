@@ -26,7 +26,7 @@ export function Cards() {
   const [selectedTariff, setSelectedTariff] = useState<TariffCard | null>(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [giftTariff, setGiftTariff] = useState<Tariff | null>(null);
+  const [giftTariff, setGiftTariff] = useState<TariffCard | null>(null);
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [copied, setCopied] = useState(false);

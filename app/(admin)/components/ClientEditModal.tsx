@@ -6,7 +6,11 @@ import { Button } from "@/ui/components/Button";
 import { Check, Ban } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
-import type { SubscriptionFromApi, SubscriptionPatchPayload } from "@/app/(admin)/admin/clients/page";
+import type {
+  SubscriptionFromApi,
+  SubscriptionPatchPayload,
+  ClientSaveData,
+} from "@/app/(admin)/admin/clients/page";
 
 interface QuestionnaireData {
   allergies: string;
@@ -37,7 +41,7 @@ interface ClientEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
-  onSave: (data: Partial<Client> & { subscription?: SubscriptionPatchPayload }) => void;
+  onSave: (data: ClientSaveData) => void;
   onBan?: () => void;
   onDelete?: () => void;
   onRevokeAdminRights?: () => void;
