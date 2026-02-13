@@ -33,6 +33,7 @@ interface Client {
   questionnaireCompleted?: boolean;
   subscriptionActive?: boolean;
   banned?: boolean;
+  isActive?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionFromApi | null;
 }
@@ -44,6 +45,7 @@ interface ClientEditModalProps {
   onSave: (data: ClientSaveData) => void;
   onBan?: () => void;
   onDelete?: () => void;
+  onRestore?: () => void;
   onRevokeAdminRights?: () => void;
   deleteButtonText?: string;
 }
@@ -87,7 +89,7 @@ function subscriptionToEditPayload(s: SubscriptionFromApi): SubscriptionPatchPay
   };
 }
 
-export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete, onRevokeAdminRights, deleteButtonText = "Удалить" }: ClientEditModalProps) {
+export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDelete, onRestore, onRevokeAdminRights, deleteButtonText = "Удалить" }: ClientEditModalProps) {
   const [activeTab, setActiveTab] = useState<"main" | "questionnaire" | "subscription">("main");
   const [formData, setFormData] = useState<Partial<Client>>({
     name: "",
@@ -901,6 +903,16 @@ export function ClientEditModal({ isOpen, onClose, client, onSave, onBan, onDele
           )}
 
           <div className="flex flex-wrap gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+            {onRestore && client?.isActive === false && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onRestore()}
+                className="flex-1 min-w-[calc(50%-0.375rem)] sm:min-w-0 !border-green-500 dark:!border-green-400 !text-black dark:!text-gray-100 hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
+                Восстановить
+              </Button>
+            )}
             {onRevokeAdminRights && (
               <Button
                 type="button"

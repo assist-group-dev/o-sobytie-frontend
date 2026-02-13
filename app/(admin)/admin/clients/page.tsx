@@ -70,6 +70,7 @@ interface Client {
   questionnaireCompleted?: boolean;
   subscriptionActive?: boolean;
   banned: boolean;
+  isActive?: boolean;
   questionnaire?: QuestionnaireData;
   subscription?: SubscriptionFromApi | null;
 }
@@ -87,12 +88,15 @@ export default function ClientsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [showDeleted, setShowDeleted] = useState(false);
 
   useEffect(() => {
     const fetchClients = async () => {
       try {
         setIsLoading(true);
-        const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients`);
+        const url = new URL(`${API_BASE_URL}/admin/clients`);
+        if (showDeleted) url.searchParams.set("includeInactive", "true");
+        const response = await fetchWithAuth(url.toString());
 
         if (!response.ok) {
           throw new Error("Failed to fetch clients");
@@ -103,6 +107,7 @@ export default function ClientsPage() {
           name: string;
           email: string;
           banned?: boolean;
+          isActive?: boolean;
           questionnaireCompleted?: boolean;
           questionnaire?: QuestionnaireData;
           eventDate?: string;
@@ -114,6 +119,7 @@ export default function ClientsPage() {
             name: client.name,
             email: client.email,
             banned: client.banned ?? false,
+            isActive: client.isActive ?? true,
             questionnaireCompleted: client.questionnaireCompleted ?? false,
             questionnaire: client.questionnaire,
             eventDate: client.eventDate,
@@ -134,7 +140,7 @@ export default function ClientsPage() {
 
     fetchClients();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showDeleted]);
 
   const sortedClients = useMemo(
     () => sortData(clients, sortKey, sortDirection),
@@ -178,6 +184,8 @@ export default function ClientsPage() {
       data.questionnaire !== undefined ||
       data.questionnaireCompleted !== undefined;
     const hasSubscriptionUpdate = data.subscription != null && data.subscription.id;
+    const shouldDeactivateSubscription =
+      data.subscriptionActive === false && selectedClient.subscription?.id != null;
 
     try {
       let clientAfterPatch: Client = selectedClient;
@@ -203,7 +211,19 @@ export default function ClientsPage() {
       }
 
       let updatedSubscription: SubscriptionFromApi | null = clientAfterPatch.subscription ?? null;
-      if (hasSubscriptionUpdate && data.subscription) {
+      if (shouldDeactivateSubscription && selectedClient.subscription?.id) {
+        const subId = selectedClient.subscription.id;
+        const subResponse = await fetchWithAuth(
+          `${API_BASE_URL}/admin/subscriptions/${subId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "expired" }),
+          }
+        );
+        if (!subResponse.ok) throw new Error("Failed to deactivate subscription");
+        updatedSubscription = null;
+      } else if (hasSubscriptionUpdate && data.subscription) {
         const sub = data.subscription;
         const subBody = {
           status: sub.status,
@@ -231,7 +251,11 @@ export default function ClientsPage() {
 
       const updatedClient: Client = {
         ...clientAfterPatch,
-        ...(hasSubscriptionUpdate && { subscription: updatedSubscription, subscriptionActive: !!updatedSubscription }),
+        ...(hasSubscriptionUpdate && !shouldDeactivateSubscription && {
+          subscription: updatedSubscription ?? null,
+          subscriptionActive: updatedSubscription != null,
+        }),
+        ...(shouldDeactivateSubscription && { subscription: null, subscriptionActive: false }),
       };
 
       setClients(
@@ -295,15 +319,50 @@ export default function ClientsPage() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (selectedClient) {
-      const deletedName = selectedClient.name;
-      setClients(clients.filter((item) => item.id !== selectedClient.id));
+  const handleRestore = async () => {
+    if (!selectedClient?.id) return;
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients/${selectedClient.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true }),
+      });
+      if (!response.ok) throw new Error("Ошибка восстановления");
+      await response.json();
+      setClients(clients.map((c) => (c.id === selectedClient.id ? { ...c, isActive: true } : c)));
+      setSelectedClient({ ...selectedClient, isActive: true });
+      addToast({ type: "success", message: `Клиент "${selectedClient.name}" восстановлен` });
+    } catch (error) {
+      console.error("Error restoring client:", error);
+      addToast({ type: "error", message: "Ошибка восстановления клиента" });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedClient) return;
+    const deletedName = selectedClient.name;
+    const clientId = selectedClient.id;
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/clients/${clientId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const err = (await response.json()) as { message?: string };
+        throw new Error(err.message ?? "Ошибка удаления клиента");
+      }
+      setClients(clients.filter((item) => item.id !== clientId));
       setSelectedClient(null);
       setIsEditModalOpen(false);
+      setIsDeleteConfirmOpen(false);
       addToast({
         type: "success",
         message: `Клиент "${deletedName}" успешно удален`,
+      });
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      addToast({
+        type: "error",
+        message: error instanceof Error ? error.message : "Ошибка удаления клиента",
       });
     }
   };
@@ -329,10 +388,22 @@ export default function ClientsPage() {
       ),
     },
     {
-      key: "subscriptionActive",
-      label: "Подписка",
+      key: "status",
+      label: "Статус",
       sortable: true,
       render: (item: Client) => {
+        if (item.isActive === false) {
+          return (
+            <span
+              className={cn(
+                "px-2 py-1 text-xs rounded",
+                "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+              )}
+            >
+              Удалён
+            </span>
+          );
+        }
         if (item.banned) {
           return (
             <span
@@ -344,6 +415,26 @@ export default function ClientsPage() {
               Забанен
             </span>
           );
+        }
+        return (
+          <span
+            className={cn(
+              "px-2 py-1 text-xs rounded",
+              "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+            )}
+          >
+            Активен
+          </span>
+        );
+      },
+    },
+    {
+      key: "subscriptionActive",
+      label: "Подписка",
+      sortable: true,
+      render: (item: Client) => {
+        if (item.banned || item.isActive === false) {
+          return <span className="text-[var(--foreground)]/40">—</span>;
         }
         return (
           <span
@@ -409,8 +500,17 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold uppercase mb-2">Клиенты</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold uppercase">Клиенты</h1>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showDeleted}
+            onChange={(e) => setShowDeleted(e.target.checked)}
+            className="w-4 h-4 text-[var(--color-golden)] focus:ring-[var(--color-golden)] rounded"
+          />
+          <span className="text-sm font-medium">Показать удалённых</span>
+        </label>
       </div>
 
       <Card className="p-0 overflow-hidden">
@@ -447,8 +547,9 @@ export default function ClientsPage() {
         onClose={() => setIsEditModalOpen(false)}
         client={selectedClient}
         onSave={handleSave}
-        onBan={handleBanClick}
-        onDelete={handleDeleteClick}
+        onBan={selectedClient?.isActive !== false ? handleBanClick : undefined}
+        onDelete={selectedClient?.isActive !== false ? handleDeleteClick : undefined}
+        onRestore={selectedClient?.isActive === false ? handleRestore : undefined}
       />
 
       <ConfirmModal
