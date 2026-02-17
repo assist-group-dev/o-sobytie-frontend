@@ -25,14 +25,15 @@ function GiftCheckoutContent() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!durationId) {
-      setLoading(false);
-      setInitError("Не указан тариф");
-      return;
-    }
-    if (successParam || failParam) {
+    if ((successParam || failParam) && orderIdFromQuery?.trim()) {
       setLoading(false);
       setInitDone(true);
+      setInitError(null);
+      return;
+    }
+    if (!durationId) {
+      setLoading(false);
+      setInitError("Выберите тариф на главной странице или в кабинете и нажмите «Купить в подарок».");
       return;
     }
     let cancelled = false;
@@ -71,7 +72,7 @@ function GiftCheckoutContent() {
     return () => {
       cancelled = true;
     };
-  }, [durationId, promoCode, successParam, failParam, router]);
+  }, [durationId, promoCode, successParam, failParam, orderIdFromQuery, router]);
 
   const fetchStatus = useCallback(async () => {
     if (!orderIdFromQuery?.trim()) return;
@@ -146,13 +147,21 @@ function GiftCheckoutContent() {
   }
 
   if (initError != null) {
+    const isNoTariff = initError.includes("Выберите тариф");
     return (
       <div className="container mx-auto px-4 py-16 max-w-lg">
         <div className="rounded-xl border border-[var(--color-cream)]/50 dark:border-[var(--color-cream)]/20 bg-[var(--background)] p-8 text-center">
           <p className="text-[var(--foreground)]/80 mb-6">{initError}</p>
-          <Link href="/">
-            <Button>На главную</Button>
-          </Link>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Link href="/">
+              <Button>На главную</Button>
+            </Link>
+            {isNoTariff && (
+              <Link href="/cabinet">
+                <Button variant="outline">В кабинет</Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     );

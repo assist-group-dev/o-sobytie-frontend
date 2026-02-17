@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
@@ -38,6 +38,12 @@ export default function CabinetPage() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResult | null>(null);
   const [paymentStatusLoading, setPaymentStatusLoading] = useState(false);
   const [paymentStatusError, setPaymentStatusError] = useState<string | null>(null);
+  const [paymentPollStopped, setPaymentPollStopped] = useState(false);
+  const paymentPollAttemptsRef = useRef(0);
+
+  const TERMINAL_STATUSES = ["REJECTED", "REFUNDED", "REVERSED"];
+  const PAYMENT_POLL_INTERVAL_MS = 8000;
+  const PAYMENT_POLL_MAX_ATTEMPTS = 20;
 
   const fetchPaymentStatus = useCallback(async () => {
     if (!orderId?.trim()) return;
@@ -66,11 +72,19 @@ export default function CabinetPage() {
   }, [orderId, successParam, failParam, fetchPaymentStatus]);
 
   useEffect(() => {
-    if (!orderId || !successParam || !paymentStatus) return;
+    if (!orderId || !successParam || !paymentStatus || paymentPollStopped) return;
     if (paymentStatus.type === "subscription" && paymentStatus.subscriptionActivated) return;
-    const t = setInterval(fetchPaymentStatus, 8000);
+    if (TERMINAL_STATUSES.includes(paymentStatus.status)) return;
+    const t = setInterval(() => {
+      fetchPaymentStatus().then(() => {
+        paymentPollAttemptsRef.current += 1;
+        if (paymentPollAttemptsRef.current >= PAYMENT_POLL_MAX_ATTEMPTS) {
+          setPaymentPollStopped(true);
+        }
+      });
+    }, PAYMENT_POLL_INTERVAL_MS);
     return () => clearInterval(t);
-  }, [orderId, successParam, paymentStatus, fetchPaymentStatus]);
+  }, [orderId, successParam, paymentStatus, paymentPollStopped, fetchPaymentStatus]);
 
   const { isFetchingProfile, fetchProfileError } = useCabinetStore();
   const questionnaireCompleted = userData?.questionnaireCompleted ?? false;
@@ -173,7 +187,9 @@ export default function CabinetPage() {
                       ? "Подписка активна."
                       : paymentStatus.type === "gift" && paymentStatus.giftCode
                         ? `Промокод: ${paymentStatus.giftCode}`
-                        : "Ожидаем подтверждение от платёжной системы. Обновите страницу через несколько секунд."}
+                        : paymentPollStopped
+                          ? "Если оплата прошла, подписка появится в течение нескольких минут. Закройте сообщение и обновите страницу позже."
+                          : "Ожидаем подтверждение от платёжной системы. Обновите страницу через несколько секунд."}
                   </p>
                 )}
               </div>
