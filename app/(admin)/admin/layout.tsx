@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Building2, Calendar, Tag, MessageSquare, Ticket, Settings, ChevronLeft, ChevronRight, Shield, UserCog, Menu, X } from "lucide-react";
+import { Users, Building2, Calendar, Tag, MessageSquare, Ticket, Settings, ChevronLeft, ChevronRight, Shield, UserCog, Menu, X, CreditCard } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
@@ -22,6 +22,7 @@ const navigation = [
   { id: "tariffs", label: "Тарифы", href: "/admin/tariffs", icon: Tag, enabled: true },
   { id: "requests", label: "Обращения", href: "/admin/requests", icon: MessageSquare, enabled: true },
   { id: "promocodes", label: "Промокоды", href: "/admin/promocodes", icon: Ticket, enabled: true },
+  { id: "payments", label: "Платежи", href: "/admin/payments", icon: CreditCard, enabled: true },
   { id: "administrators", label: "Администраторы", href: "/admin/administrators", icon: UserCog, enabled: true },
   { id: "general", label: "Общие", href: "/admin/general", icon: Settings, enabled: true },
 ];

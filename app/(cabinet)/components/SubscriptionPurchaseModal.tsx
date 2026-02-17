@@ -44,9 +44,8 @@ export function SubscriptionPurchaseModal({
   isOpen,
   onClose,
   tariff,
-  onSuccess,
 }: SubscriptionPurchaseModalProps) {
-  const { appliedPromos, removeAppliedPromoByDurationId } = useCabinetStore();
+  const { appliedPromos } = useCabinetStore();
   const appliedPromoForTariff = appliedPromos.find((p) => p.durationId === tariff.id) ?? null;
   const applies = appliedPromoForTariff != null;
   const displayPrice = applies
@@ -116,7 +115,7 @@ export function SubscriptionPurchaseModal({
       if (currentPromo?.code != null && currentPromo.code.trim() !== "") {
         body.promoCode = currentPromo.code.trim();
       }
-      const response = await fetchWithAuth(`${API_BASE_URL}/subscriptions`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/payments/subscription/init`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -125,19 +124,12 @@ export function SubscriptionPurchaseModal({
         const err = (await response.json()) as { message?: string };
         throw new Error(err.message ?? "Ошибка оформления подписки");
       }
-      removeAppliedPromoByDurationId(tariff.id);
-      onSuccess?.();
-      onClose();
-      setCurrentStep(0);
-      setFormData({
-        city: "",
-        street: "",
-        house: "",
-        apartment: "",
-        phone: "",
-        deliveryDate: "",
-        deliveryTime: "",
-      });
+      const data = (await response.json()) as { paymentURL: string; orderId: string };
+      if (data.paymentURL) {
+        window.location.href = data.paymentURL;
+        return;
+      }
+      throw new Error("Не получена ссылка на оплату");
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Ошибка оформления подписки");
     } finally {

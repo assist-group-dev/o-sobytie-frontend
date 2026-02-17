@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { User, Package, LogOut, Mail, FileText } from "lucide-react";
+import { User, Package, LogOut, Mail, FileText, CheckCircle, XCircle } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 import { SubscriptionModal } from "@/app/(cabinet)/components/SubscriptionModal";
@@ -13,13 +13,64 @@ import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
+interface PaymentStatusResult {
+  status: string;
+  type: "subscription" | "gift";
+  subscriptionActivated?: boolean;
+  subscriptionId?: string;
+  giftPromocodeCreated?: boolean;
+  giftCode?: string;
+}
+
 export default function CabinetPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { subscription, userData, fetchProfile, setUserData } = useCabinetStore();
   const { logout } = useAppStore();
+
+  const orderId = searchParams.get("orderId") ?? undefined;
+  const successParam = searchParams.get("success") === "1";
+  const failParam = searchParams.get("fail") === "1";
+
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResult | null>(null);
+  const [paymentStatusLoading, setPaymentStatusLoading] = useState(false);
+  const [paymentStatusError, setPaymentStatusError] = useState<string | null>(null);
+
+  const fetchPaymentStatus = useCallback(async () => {
+    if (!orderId?.trim()) return;
+    setPaymentStatusLoading(true);
+    setPaymentStatusError(null);
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/payments/status?orderId=${encodeURIComponent(orderId.trim())}`);
+      if (!response.ok) {
+        if (response.status === 404) setPaymentStatusError("Платёж не найден");
+        else setPaymentStatusError("Ошибка загрузки статуса");
+        return;
+      }
+      const data = (await response.json()) as PaymentStatusResult;
+      setPaymentStatus(data);
+    } catch {
+      setPaymentStatusError("Ошибка загрузки статуса");
+    } finally {
+      setPaymentStatusLoading(false);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    if (orderId && (successParam || failParam)) {
+      fetchPaymentStatus();
+    }
+  }, [orderId, successParam, failParam, fetchPaymentStatus]);
+
+  useEffect(() => {
+    if (!orderId || !successParam || !paymentStatus) return;
+    if (paymentStatus.type === "subscription" && paymentStatus.subscriptionActivated) return;
+    const t = setInterval(fetchPaymentStatus, 8000);
+    return () => clearInterval(t);
+  }, [orderId, successParam, paymentStatus, fetchPaymentStatus]);
 
   const { isFetchingProfile, fetchProfileError } = useCabinetStore();
   const questionnaireCompleted = userData?.questionnaireCompleted ?? false;
@@ -36,6 +87,12 @@ export default function CabinetPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (orderId && successParam && paymentStatus?.subscriptionActivated) {
+      fetchProfile().catch(() => {});
+    }
+  }, [orderId, successParam, paymentStatus?.subscriptionActivated, fetchProfile]);
 
   const handleLogoutClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -78,8 +135,61 @@ export default function CabinetPage() {
     setIsSubscriptionModalOpen(true);
   };
 
+  const showPaymentBanner = orderId != null && (successParam || failParam);
+
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      {showPaymentBanner && (
+        <div
+          className={cn(
+            "rounded-xl border p-4 max-w-3xl",
+            failParam
+              ? "border-red-200 dark:border-red-900/50 bg-red-50/80 dark:bg-red-950/30"
+              : "border-green-200 dark:border-green-900/50 bg-green-50/80 dark:bg-green-950/30"
+          )}
+        >
+          {failParam ? (
+            <div className="flex items-center gap-3">
+              <XCircle className="h-8 w-8 shrink-0 text-red-600 dark:text-red-400" />
+              <div>
+                <p className="font-medium text-red-800 dark:text-red-200">Оплата не прошла</p>
+                <p className="text-sm text-red-700 dark:text-red-300">Можно попробовать оформить подписку снова.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-8 w-8 shrink-0 text-green-600 dark:text-green-400" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-green-800 dark:text-green-200">Оплата получена</p>
+                {paymentStatusLoading && !paymentStatus && (
+                  <p className="text-sm text-green-700 dark:text-green-300">Загрузка статуса…</p>
+                )}
+                {paymentStatusError && (
+                  <p className="text-sm text-green-700 dark:text-green-300">{paymentStatusError}</p>
+                )}
+                {paymentStatus && !paymentStatusLoading && (
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    {paymentStatus.type === "subscription" && paymentStatus.subscriptionActivated
+                      ? "Подписка активна."
+                      : paymentStatus.type === "gift" && paymentStatus.giftCode
+                        ? `Промокод: ${paymentStatus.giftCode}`
+                        : "Ожидаем подтверждение от платёжной системы. Обновите страницу через несколько секунд."}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          <Button
+            variant="text"
+            size="sm"
+            className="mt-3 text-[var(--foreground)]/70 hover:text-[var(--foreground)]"
+            onClick={() => router.replace("/cabinet")}
+          >
+            Убрать сообщение
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-0 max-w-3xl">
         <div className="p-3 sm:p-4 lg:p-6 bg-[var(--color-cream)]/15 dark:bg-transparent rounded-xl">
           <div className="flex items-center justify-between gap-2 sm:gap-3 lg:gap-4">

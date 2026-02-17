@@ -1,23 +1,27 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/ui/components/Button";
 import { Copy, Download, Check, Gift } from "lucide-react";
-import { cn } from "@/utils/cn";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 function GiftCheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const durationId = searchParams.get("durationId") ?? "";
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const promoCode = searchParams.get("promoCode") ?? undefined;
+  const successParam = searchParams.get("success") === "1";
+  const failParam = searchParams.get("fail") === "1";
+  const orderIdFromQuery = searchParams.get("orderId") ?? undefined;
+
+  const [initDone, setInitDone] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
-  const [completing, setCompleting] = useState(false);
-  const [completeError, setCompleteError] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -26,27 +30,38 @@ function GiftCheckoutContent() {
       setInitError("Не указан тариф");
       return;
     }
+    if (successParam || failParam) {
+      setLoading(false);
+      setInitDone(true);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
         if (!token) {
-          const returnUrl = `/gift/checkout?durationId=${encodeURIComponent(durationId)}`;
+          const returnUrl = `/gift/checkout?durationId=${encodeURIComponent(durationId)}${promoCode ? `&promoCode=${encodeURIComponent(promoCode)}` : ""}`;
           router.replace(`/?login=1&returnUrl=${encodeURIComponent(returnUrl)}`);
           return;
         }
+        const body: { durationId: string; promoCode?: string } = { durationId };
+        if (promoCode?.trim()) body.promoCode = promoCode.trim();
         const response = await fetchWithAuth(`${API_BASE_URL}/payments/gift/init`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ durationId }),
+          body: JSON.stringify(body),
         });
         if (!response.ok) {
           const err = (await response.json()) as { message?: string };
           if (!cancelled) setInitError(err.message ?? "Ошибка инициализации");
           return;
         }
-        const data = (await response.json()) as { orderId: string };
-        if (!cancelled) setOrderId(data.orderId);
+        const data = (await response.json()) as { paymentURL: string; orderId: string };
+        if (!cancelled && data.paymentURL) {
+          window.location.href = data.paymentURL;
+          return;
+        }
+        if (!cancelled) setInitError("Не получена ссылка на оплату");
       } catch {
         if (!cancelled) setInitError("Ошибка загрузки");
       } finally {
@@ -56,30 +71,46 @@ function GiftCheckoutContent() {
     return () => {
       cancelled = true;
     };
-  }, [durationId, router]);
+  }, [durationId, promoCode, successParam, failParam, router]);
 
-  const handleSimulatePayment = async () => {
-    if (!orderId || !durationId) return;
-    setCompleteError(null);
-    setCompleting(true);
+  const fetchStatus = useCallback(async () => {
+    if (!orderIdFromQuery?.trim()) return;
+    setStatusLoading(true);
+    setStatusError(null);
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/payments/gift/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, durationId }),
-      });
+      const response = await fetchWithAuth(
+        `${API_BASE_URL}/payments/status?orderId=${encodeURIComponent(orderIdFromQuery.trim())}`
+      );
       if (!response.ok) {
-        const err = (await response.json()) as { message?: string };
-        throw new Error(err.message ?? "Ошибка оплаты");
+        if (response.status === 404) setStatusError("Платёж не найден");
+        else setStatusError("Ошибка загрузки статуса");
+        return;
       }
-      const data = (await response.json()) as { code: string };
-      setCode(data.code);
-    } catch (e) {
-      setCompleteError(e instanceof Error ? e.message : "Ошибка");
+      const data = (await response.json()) as {
+        status: string;
+        type: string;
+        giftPromocodeCreated?: boolean;
+        giftCode?: string;
+      };
+      if (data.giftPromocodeCreated && data.giftCode) setCode(data.giftCode);
+    } catch {
+      setStatusError("Ошибка загрузки статуса");
     } finally {
-      setCompleting(false);
+      setStatusLoading(false);
     }
-  };
+  }, [orderIdFromQuery]);
+
+  useEffect(() => {
+    if (initDone && successParam && orderIdFromQuery) {
+      fetchStatus();
+    }
+  }, [initDone, successParam, orderIdFromQuery, fetchStatus]);
+
+  useEffect(() => {
+    if (!initDone || !successParam || !orderIdFromQuery || code != null) return;
+    const t = setInterval(fetchStatus, 5000);
+    return () => clearInterval(t);
+  }, [initDone, successParam, orderIdFromQuery, code, fetchStatus]);
 
   const handleCopy = async () => {
     if (!code) return;
@@ -88,7 +119,7 @@ function GiftCheckoutContent() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setCompleteError("Не удалось скопировать");
+      setStatusError("Не удалось скопировать");
     }
   };
 
@@ -109,7 +140,7 @@ function GiftCheckoutContent() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <p className="text-[var(--foreground)]/70">Загрузка…</p>
+        <p className="text-[var(--foreground)]/70">Перенаправление на оплату…</p>
       </div>
     );
   }
@@ -119,6 +150,20 @@ function GiftCheckoutContent() {
       <div className="container mx-auto px-4 py-16 max-w-lg">
         <div className="rounded-xl border border-[var(--color-cream)]/50 dark:border-[var(--color-cream)]/20 bg-[var(--background)] p-8 text-center">
           <p className="text-[var(--foreground)]/80 mb-6">{initError}</p>
+          <Link href="/">
+            <Button>На главную</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (initDone && failParam) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg">
+        <div className="rounded-xl border border-[var(--color-cream)]/50 dark:border-[var(--color-cream)]/20 bg-[var(--background)] p-8 text-center">
+          <h1 className="text-2xl font-bold uppercase mb-4">Оплата не прошла</h1>
+          <p className="text-[var(--foreground)]/80 mb-6">Можно попробовать оформить подарок снова.</p>
           <Link href="/">
             <Button>На главную</Button>
           </Link>
@@ -157,29 +202,27 @@ function GiftCheckoutContent() {
     );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-16 max-w-lg">
-      <div className="rounded-xl border border-[var(--color-cream)]/50 dark:border-[var(--color-cream)]/20 bg-[var(--background)] p-8 text-center space-y-6">
-        <h1 className="text-2xl font-bold uppercase">Оплата подарка</h1>
-        <p className="text-[var(--foreground)]/70">
-          Нажмите кнопку ниже, чтобы симулировать успешную оплату и получить промокод. В реальной интеграции здесь будет переход на страницу платёжного провайдера.
-        </p>
-        {completeError != null && (
-          <p className="text-sm text-red-500">{completeError}</p>
-        )}
-        <Button
-          onClick={handleSimulatePayment}
-          disabled={completing}
-          className={cn("w-full sm:w-auto", completing && "opacity-70")}
-        >
-          {completing ? "Создание промокода…" : "Симулировать успешную оплату"}
-        </Button>
-        <Link href="/">
-          <Button variant="outline">Отмена</Button>
-        </Link>
+  if (initDone && successParam && orderIdFromQuery) {
+    return (
+      <div className="container mx-auto px-4 py-16 max-w-lg">
+        <div className="rounded-xl border border-[var(--color-cream)]/50 dark:border-[var(--color-cream)]/20 bg-[var(--background)] p-8 text-center space-y-6">
+          <h1 className="text-2xl font-bold uppercase">Оплата получена</h1>
+          {statusLoading && !code ? (
+            <p className="text-[var(--foreground)]/70">Ожидаем подтверждение от платёжной системы…</p>
+          ) : statusError ? (
+            <p className="text-[var(--foreground)]/70">{statusError}</p>
+          ) : (
+            <p className="text-[var(--foreground)]/70">Промокод создаётся. Обновите страницу через несколько секунд.</p>
+          )}
+          <Link href="/">
+            <Button variant="outline">На главную</Button>
+          </Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
 
 export default function GiftCheckoutPage() {
