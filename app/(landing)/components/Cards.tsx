@@ -79,7 +79,7 @@ export function Cards() {
   const handleBuyAsGift = () => {
     if (selectedTariff) {
       const promo = getEffectivePromoForTariff(selectedTariff.id);
-      const params = new URLSearchParams({ durationId: selectedTariff.id });
+      const params = new URLSearchParams({ durationId: selectedTariff.id, from: "landing" });
       if (promo?.code?.trim()) params.set("promoCode", promo.code.trim());
       router.push(`/gift/checkout?${params.toString()}`);
       setSelectedTariff(null);

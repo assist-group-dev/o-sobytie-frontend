@@ -9,6 +9,7 @@ import { FAQ } from "./(landing)/components/FAQ";
 import { CTA } from "./(landing)/components/CTA";
 import { Footer } from "./(landing)/components/Footer";
 import { FloatingContactButton } from "./(landing)/components/FloatingContactButton";
+import { GiftPaymentSuccessHandler } from "./(landing)/components/GiftPaymentSuccessHandler";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
 
 export default function LandingPage() {
@@ -63,6 +64,7 @@ export default function LandingPage() {
 
   return (
     <>
+      <GiftPaymentSuccessHandler />
       <LoadingOverlay isLoading={isLoading} />
       <div className="flex min-h-screen flex-col">
         <div

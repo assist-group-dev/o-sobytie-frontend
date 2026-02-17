@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { User, Package, LogOut, Mail, FileText, CheckCircle, XCircle } from "lucide-react";
+import { User, Package, LogOut, Mail, FileText, CheckCircle, XCircle, Copy, Download, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
 import { SubscriptionModal } from "@/app/(cabinet)/components/SubscriptionModal";
@@ -40,6 +40,8 @@ export default function CabinetPage() {
   const [paymentStatusError, setPaymentStatusError] = useState<string | null>(null);
   const [paymentPollStopped, setPaymentPollStopped] = useState(false);
   const paymentPollAttemptsRef = useRef(0);
+  const [showGiftCodeModal, setShowGiftCodeModal] = useState(false);
+  const [giftCodeCopied, setGiftCodeCopied] = useState(false);
 
   const TERMINAL_STATUSES = ["REJECTED", "REFUNDED", "REVERSED"];
   const PAYMENT_POLL_INTERVAL_MS = 8000;
@@ -108,6 +110,12 @@ export default function CabinetPage() {
     }
   }, [orderId, successParam, paymentStatus?.subscriptionActivated, fetchProfile]);
 
+  useEffect(() => {
+    if (paymentStatus?.type === "gift" && paymentStatus?.giftCode) {
+      setShowGiftCodeModal(true);
+    }
+  }, [paymentStatus?.type, paymentStatus?.giftCode]);
+
   const handleLogoutClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -150,6 +158,32 @@ export default function CabinetPage() {
   };
 
   const showPaymentBanner = orderId != null && (successParam || failParam);
+  const giftCode = paymentStatus?.type === "gift" ? paymentStatus.giftCode : undefined;
+
+  const handleGiftCodeCopy = async () => {
+    if (!giftCode) return;
+    try {
+      await navigator.clipboard.writeText(giftCode);
+      setGiftCodeCopied(true);
+      setTimeout(() => setGiftCodeCopied(false), 2000);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleGiftCodeDownload = () => {
+    if (!giftCode) return;
+    const content = `Промокод на подписку в подарок\n\nПромокод: ${giftCode}\n\nСпасибо за покупку!`;
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `promo-code-${giftCode}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6 lg:space-y-8">
@@ -204,6 +238,70 @@ export default function CabinetPage() {
             Убрать сообщение
           </Button>
         </div>
+      )}
+
+      {giftCode != null && (
+        <Modal
+          isOpen={showGiftCodeModal}
+          onClose={() => setShowGiftCodeModal(false)}
+          className="p-0 max-w-2xl w-full mx-2 sm:mx-4"
+        >
+          <div className="p-6 sm:p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase mb-2">Промокод создан</h2>
+              <p className="text-base text-[var(--foreground)]/70">
+                Передайте этот код получателю подарка. Он сможет оформить подписку со скидкой 100%.
+              </p>
+            </div>
+
+            <div className="mb-6 p-6 bg-[var(--color-cream)]/20 dark:bg-[var(--color-cream)]/10 border-2 border-[var(--color-golden)]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[var(--foreground)]/60 mb-2">Промокод</p>
+                  <p className="text-xl sm:text-2xl font-bold font-mono tracking-wider break-all">{giftCode}</p>
+                </div>
+                <button
+                  onClick={handleGiftCodeCopy}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto",
+                    "bg-[var(--color-golden)] text-[var(--background)] hover:opacity-90"
+                  )}
+                >
+                  {giftCodeCopied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Скопировано
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Копировать
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleGiftCodeDownload}
+                className="flex-1 uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Скачать
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => setShowGiftCodeModal(false)}
+                className="flex-1 uppercase tracking-wider"
+              >
+                Закрыть
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       <div className="flex flex-col gap-0 max-w-3xl">

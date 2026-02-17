@@ -9,6 +9,7 @@ import { Logo } from "@/ui/components/Logo";
 import { ThemeToggle } from "@/ui/components/ThemeToggle";
 import { LoadingOverlay } from "@/ui/components/LoadingOverlay";
 import { ToastContainer } from "@/app/(cabinet)/components/ToastContainer";
+import { GiftActivationModal } from "@/app/(cabinet)/components/GiftActivationModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
@@ -29,6 +30,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const pathname = usePathname();
   const [promoCode, setPromoCode] = useState("");
   const [isPromoValidating, setIsPromoValidating] = useState(false);
+  const [giftModal, setGiftModal] = useState<{ code: string; durationId: string; durationName?: string } | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
@@ -94,18 +96,29 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
       }
       const data = (await response.json()) as {
         valid: true;
+        type: "admin" | "gift";
         discountPercent: number;
         durationId: string;
         promocodeId: string;
+        durationName?: string;
       };
-      addOrReplaceAppliedPromo({
-        code,
-        discountPercent: data.discountPercent,
-        durationId: data.durationId,
-        promocodeId: data.promocodeId,
-      });
-      addToast({ type: "success", message: `Скидка ${data.discountPercent}% применена для выбранного периода` });
-      setPromoCode("");
+      if (data.type === "gift") {
+        setGiftModal({
+          code,
+          durationId: data.durationId,
+          durationName: data.durationName,
+        });
+        setPromoCode("");
+      } else {
+        addOrReplaceAppliedPromo({
+          code,
+          discountPercent: data.discountPercent,
+          durationId: data.durationId,
+          promocodeId: data.promocodeId,
+        });
+        addToast({ type: "success", message: `Скидка ${data.discountPercent}% применена для выбранного периода` });
+        setPromoCode("");
+      }
     } catch {
       addToast({ type: "error", message: "Ошибка проверки промокода" });
     } finally {
@@ -243,6 +256,20 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {giftModal != null && (
+        <GiftActivationModal
+          isOpen
+          onClose={() => setGiftModal(null)}
+          promoCode={giftModal.code}
+          durationId={giftModal.durationId}
+          durationName={giftModal.durationName}
+          onSuccess={() => {
+            fetchProfile().catch(console.error);
+            addToast({ type: "success", message: "Подарочная подписка активирована" });
+          }}
         />
       )}
 

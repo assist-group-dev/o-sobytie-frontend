@@ -64,7 +64,7 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
 
   const handleBuyAsGift = () => {
     if (selectedTariff) {
-      router.push(`/gift/checkout?durationId=${encodeURIComponent(selectedTariff.id)}`);
+      router.push(`/gift/checkout?durationId=${encodeURIComponent(selectedTariff.id)}&from=cabinet`);
       setSelectedTariff(null);
     }
   };
