@@ -12,7 +12,7 @@ import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
-import { getAbsoluteApiUrl, fetchWithAuth } from "@/utils/backend";
+import { API_BASE_URL, getAbsoluteApiUrl, fetchWithAuth } from "@/utils/backend";
 
 interface QuestionnaireData {
   allergies: string;
