@@ -12,7 +12,7 @@ import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { useToastStore } from "@/app/(admin)/stores/useToastStore";
 import { sortData } from "@/app/(admin)/utils/sortData";
 import { cn } from "@/utils/cn";
-import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
+import { getAbsoluteApiUrl, fetchWithAuth } from "@/utils/backend";
 
 interface QuestionnaireData {
   allergies: string;
@@ -94,7 +94,7 @@ export default function ClientsPage() {
     const fetchClients = async () => {
       try {
         setIsLoading(true);
-        const url = new URL(`${API_BASE_URL}/admin/clients`);
+        const url = new URL(getAbsoluteApiUrl("/admin/clients"));
         if (showDeleted) url.searchParams.set("includeInactive", "true");
         const response = await fetchWithAuth(url.toString());
 

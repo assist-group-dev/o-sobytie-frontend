@@ -35,6 +35,14 @@ export const getApiBaseUrl = (): string => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+export function getAbsoluteApiUrl(path: string): string {
+  const fullPath = path.startsWith("/") ? `${API_BASE_URL}${path}` : `${API_BASE_URL}/${path}`;
+  if (typeof window !== "undefined" && !API_BASE_URL.startsWith("http")) {
+    return new URL(fullPath, window.location.origin).toString();
+  }
+  return fullPath;
+}
+
 export async function fetchWithAuth(
   url: string,
   options: RequestInit = {}
