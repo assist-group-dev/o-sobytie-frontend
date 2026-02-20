@@ -212,11 +212,6 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   <Ticket className="h-3 w-3" />
                   Есть промокод?
                 </p>
-                {appliedPromos.length > 0 && (
-                  <p className="text-xs text-[var(--color-golden)] mb-1">
-                    Применено промокодов: {appliedPromos.length}
-                  </p>
-                )}
                 <div className="flex gap-2">
                   <input
                     type="text"

@@ -53,6 +53,7 @@ export default function CabinetPage() {
   const TERMINAL_STATUSES = ["REJECTED", "REFUNDED", "REVERSED"];
   const PAYMENT_POLL_INTERVAL_MS = 8000;
   const PAYMENT_POLL_MAX_ATTEMPTS = 20;
+  const successPaymentToastShownRef = useRef(false);
 
   const fetchPaymentStatus = useCallback(async () => {
     if (!orderId?.trim()) return;
@@ -171,6 +172,24 @@ export default function CabinetPage() {
 
   const { addToast } = useToastStore();
 
+  useEffect(() => {
+    if (!successParam || !paymentStatus || successPaymentToastShownRef.current) return;
+    const done =
+      (paymentStatus.type === "subscription" && paymentStatus.subscriptionActivated) ||
+      (paymentStatus.type === "gift" && paymentStatus.giftCode);
+    if (!done) return;
+    successPaymentToastShownRef.current = true;
+    addToast({
+      type: "success",
+      message:
+        paymentStatus.type === "subscription"
+          ? "Оплата получена. Подписка активна."
+          : `Оплата получена. Промокод: ${paymentStatus.giftCode}`,
+      duration: 5000,
+    });
+    router.replace("/cabinet", { scroll: false });
+  }, [successParam, paymentStatus, addToast, router]);
+
   const handleQuestionnaireComplete = () => {
     if (userData) {
       setUserData({ ...userData, questionnaireCompleted: true });
@@ -190,7 +209,15 @@ export default function CabinetPage() {
     }
   };
 
-  const showPaymentBanner = orderId != null && (successParam || failParam);
+  const successPaymentDone =
+    paymentStatus?.type === "subscription"
+      ? paymentStatus?.subscriptionActivated
+      : paymentStatus?.type === "gift"
+        ? Boolean(paymentStatus?.giftCode)
+        : false;
+  const showPaymentBanner =
+    orderId != null &&
+    (failParam || (successParam && !successPaymentDone));
   const giftCode = paymentStatus?.type === "gift" ? paymentStatus.giftCode : undefined;
 
   const handleGiftCodeCopy = async () => {
