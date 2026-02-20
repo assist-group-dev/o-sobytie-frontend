@@ -364,10 +364,14 @@ export function Cards() {
                     {promoError != null && <p className="text-xs text-red-500">{promoError}</p>}
                   </form>
                 )}
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   onClick={() => {
-                    if (!isAuthenticated) {
+                    if (isAuthenticated && selectedTariff) {
+                      const params = new URLSearchParams({ durationId: selectedTariff.id, subscribe: "1" });
+                      router.push(`/cabinet?${params.toString()}`);
+                      setSelectedTariff(null);
+                    } else if (!isAuthenticated) {
                       handleOpenAuthForSubscribe();
                     }
                   }}

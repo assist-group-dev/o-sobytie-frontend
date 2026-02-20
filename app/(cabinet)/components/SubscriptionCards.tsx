@@ -21,6 +21,7 @@ const maskEmail = (email: string): string => {
 };
 
 export function SubscriptionCards() {
+  const router = useRouter();
   const { userData } = useCabinetStore();
   const [tariffs, setTariffs] = useState<TariffCard[]>([]);
   const [tariffsLoading, setTariffsLoading] = useState(true);
@@ -39,7 +40,6 @@ export function SubscriptionCards() {
     });
   }, []);
 
-  const router = useRouter();
   const userEmail = (userData?.email as string) ?? "";
   const maskedEmail = userEmail ? maskEmail(userEmail) : "";
 

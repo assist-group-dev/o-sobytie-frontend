@@ -9,6 +9,7 @@ import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
+import { QuestionnaireRequiredModal } from "./QuestionnaireRequiredModal";
 import { fetchTariffs, formatPrice, type TariffCard } from "@/app/(landing)/utils/tariffs";
 
 const maskEmail = (email: string): string => {
@@ -390,41 +391,18 @@ export function SubscriptionModal({ isOpen, onClose, isQuestionnaireCompleted, o
         />
       )}
 
-      <Modal
+      <QuestionnaireRequiredModal
         isOpen={isQuestionnaireRequiredModalOpen}
-        onClose={() => setIsQuestionnaireRequiredModalOpen(false)}
-        className="max-w-md"
-      >
-        <div className="p-6 sm:p-8">
-          <div className="mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold uppercase mb-2">Анкетирование обязательно</h2>
-            <p className="text-sm text-[var(--foreground)]/70">
-              Для оформления подписки необходимо пройти анкетирование. Это поможет нам подобрать идеальные впечатления специально для вас.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
-            <Button
-              size="lg"
-              onClick={() => {
-                setIsQuestionnaireRequiredModalOpen(false);
-                setSelectedTariff(null);
-                onOpenQuestionnaire();
-              }}
-              className="uppercase tracking-wider w-full sm:flex-1"
-            >
-              Пройти анкету
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setIsQuestionnaireRequiredModalOpen(false)}
-              className="uppercase tracking-wider w-full sm:flex-1"
-            >
-              Отмена
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onClose={() => {
+          setIsQuestionnaireRequiredModalOpen(false);
+          setSelectedTariff(null);
+        }}
+        onOpenQuestionnaire={() => {
+          setIsQuestionnaireRequiredModalOpen(false);
+          setSelectedTariff(null);
+          onOpenQuestionnaire();
+        }}
+      />
     </>
   );
 }
