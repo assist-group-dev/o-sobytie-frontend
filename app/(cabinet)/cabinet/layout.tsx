@@ -34,7 +34,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const { userData, fetchProfile, isFetchingProfile, fetchProfileError, appliedPromos, addOrReplaceAppliedPromo } = useCabinetStore();
+  const { userData, fetchProfile, isFetchingProfile, fetchProfileError, addOrReplaceAppliedPromo } = useCabinetStore();
   const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
