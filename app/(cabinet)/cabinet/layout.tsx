@@ -34,7 +34,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [prevPathname, setPrevPathname] = useState(pathname);
-  const { userData, fetchProfile, isFetchingProfile, fetchProfileError, appliedPromos, addOrReplaceAppliedPromo } = useCabinetStore();
+  const { userData, fetchProfile, isFetchingProfile, fetchProfileError, addOrReplaceAppliedPromo } = useCabinetStore();
   const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
@@ -153,7 +153,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-24 xl:pt-48 min-[1536px]:pt-64 min-[1920px]:pt-48 pb-4 sm:pb-6">
+      <div className="container mx-auto px-4 pt-20 sm:pt-24 lg:pt-24 xl:pt-36 min-[1536px]:pt-40 min-[1920px]:pt-36 pb-4 sm:pb-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
             <aside
@@ -212,11 +212,6 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
                   <Ticket className="h-3 w-3" />
                   Есть промокод?
                 </p>
-                {appliedPromos.length > 0 && (
-                  <p className="text-xs text-[var(--color-golden)] mb-1">
-                    Применено промокодов: {appliedPromos.length}
-                  </p>
-                )}
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -245,7 +240,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
             </div>
           </aside>
 
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 -mt-2 lg:-mt-4">
             {children}
           </main>
         </div>

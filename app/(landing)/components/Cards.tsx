@@ -4,12 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/ui/components/Button";
 import { Modal } from "@/ui/components/Modal";
-import { ArrowRight, Gift, Copy, Download, Check, Mail, Ticket } from "lucide-react";
+import { ArrowRight, Gift, Copy, Download, Check, Mail } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
 import { AuthModal } from "./AuthModal";
 import { fetchTariffs, formatPrice, type TariffCard } from "@/app/(landing)/utils/tariffs";
-import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
 const PENDING_PROMO_KEY = "pending_promo";
 
@@ -39,7 +38,7 @@ type AppliedPromoDisplay = { code: string; discountPercent: number; durationId: 
 
 export function Cards() {
   const router = useRouter();
-  const { userData, appliedPromos, addOrReplaceAppliedPromo } = useCabinetStore();
+  const { userData, appliedPromos } = useCabinetStore();
   const [tariffs, setTariffs] = useState<TariffCard[]>([]);
   const [tariffsLoading, setTariffsLoading] = useState(true);
   const [selectedTariff, setSelectedTariff] = useState<TariffCard | null>(null);
@@ -50,10 +49,7 @@ export function Cards() {
   const [userEmail, setUserEmail] = useState("");
   const [copied, setCopied] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [promoInput, setPromoInput] = useState("");
   const [appliedPromoLanding, setAppliedPromoLanding] = useState<AppliedPromoDisplay | null>(null);
-  const [isPromoValidating, setIsPromoValidating] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
 
   const isAuthenticated = userData !== null;
   const getEffectivePromoForTariff = (durationId: string): AppliedPromoDisplay | null =>
@@ -84,7 +80,6 @@ export function Cards() {
       router.push(`/gift/checkout?${params.toString()}`);
       setSelectedTariff(null);
       setAppliedPromoLanding(null);
-      setPromoInput("");
     }
   };
 
@@ -122,54 +117,6 @@ export function Cards() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    }
-  };
-
-  const handleApplyPromo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = promoInput.trim();
-    if (!code || !selectedTariff) return;
-    setPromoError(null);
-    setIsPromoValidating(true);
-    try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/promocodes/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, durationId: selectedTariff.id }),
-      });
-      if (!response.ok) {
-        const err = (await response.json()) as { message?: string };
-        setPromoError(err.message ?? "Промокод недействителен");
-        setAppliedPromoLanding(null);
-        return;
-      }
-      const data = (await response.json()) as {
-        valid: true;
-        discountPercent: number;
-        durationId: string;
-        promocodeId?: string;
-      };
-      const promoPayload = {
-        code,
-        discountPercent: data.discountPercent,
-        durationId: data.durationId,
-        ...(data.promocodeId != null ? { promocodeId: data.promocodeId } : {}),
-      };
-      if (isAuthenticated) {
-        addOrReplaceAppliedPromo(promoPayload);
-      } else {
-        setAppliedPromoLanding({
-          code: promoPayload.code,
-          discountPercent: promoPayload.discountPercent,
-          durationId: promoPayload.durationId,
-        });
-      }
-      setPromoError(null);
-    } catch {
-      setPromoError("Ошибка проверки промокода");
-      setAppliedPromoLanding(null);
-    } finally {
-      setIsPromoValidating(false);
     }
   };
 
@@ -278,11 +225,7 @@ export function Cards() {
 
       <Modal
         isOpen={selectedTariff !== null}
-        onClose={() => {
-          setSelectedTariff(null);
-          setPromoInput("");
-          setPromoError(null);
-        }}
+        onClose={() => setSelectedTariff(null)}
         className="p-0 max-w-7xl w-full mx-2 sm:mx-4 max-h-[98vh] sm:max-h-[90vh]"
       >
         {selectedTariff && (
@@ -335,39 +278,14 @@ export function Cards() {
               </div>
 
               <div className="mt-auto pt-2 sm:pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 space-y-2 sm:space-y-3">
-                {selectedTariff && (
-                  <form onSubmit={handleApplyPromo} className="space-y-2 mb-4">
-                    <p className="text-xs font-medium text-[var(--foreground)]/70 flex items-center gap-1">
-                      <Ticket className="h-3 w-3" />
-                      Промокод
-                    </p>
-                    {selectedTariff != null && getEffectivePromoForTariff(selectedTariff.id) != null && (
-                      <p className="text-xs text-[var(--color-golden)]">Скидка {getEffectivePromoForTariff(selectedTariff.id)!.discountPercent}% применена</p>
-                    )}
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={promoInput}
-                        onChange={(e) => setPromoInput(e.target.value)}
-                        placeholder="Введите код"
-                        disabled={isPromoValidating}
-                        className={cn(
-                          "flex-1 px-3 py-2 text-sm border-2 border-[var(--color-cream)] dark:border-[var(--color-cream)]/50",
-                          "bg-[var(--background)] text-[var(--foreground)]",
-                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-golden)]/50"
-                        )}
-                      />
-                      <Button type="submit" size="sm" disabled={isPromoValidating}>
-                        {isPromoValidating ? "..." : "Применить"}
-                      </Button>
-                    </div>
-                    {promoError != null && <p className="text-xs text-red-500">{promoError}</p>}
-                  </form>
-                )}
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   onClick={() => {
-                    if (!isAuthenticated) {
+                    if (isAuthenticated && selectedTariff) {
+                      const params = new URLSearchParams({ durationId: selectedTariff.id, subscribe: "1" });
+                      router.push(`/cabinet?${params.toString()}`);
+                      setSelectedTariff(null);
+                    } else if (!isAuthenticated) {
                       handleOpenAuthForSubscribe();
                     }
                   }}

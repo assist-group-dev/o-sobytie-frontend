@@ -7,8 +7,11 @@ import { Modal } from "@/ui/components/Modal";
 import { User, Package, LogOut, Mail, FileText, CheckCircle, XCircle, Copy, Download, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { QuestionnaireModal } from "@/app/(cabinet)/components/QuestionnaireModal";
+import { QuestionnaireRequiredModal } from "@/app/(cabinet)/components/QuestionnaireRequiredModal";
 import { SubscriptionModal } from "@/app/(cabinet)/components/SubscriptionModal";
+import { SubscriptionPurchaseModal } from "@/app/(cabinet)/components/SubscriptionPurchaseModal";
 import { useCabinetStore } from "@/app/(cabinet)/stores/useCabinetStore";
+import { fetchTariffs, type TariffCard } from "@/app/(landing)/utils/tariffs";
 import { useToastStore } from "@/app/(cabinet)/stores/useToastStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
@@ -28,6 +31,10 @@ export default function CabinetPage() {
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [purchaseTariff, setPurchaseTariff] = useState<TariffCard | null>(null);
+  const [pendingSubscribeTariff, setPendingSubscribeTariff] = useState<TariffCard | null>(null);
+  const [isQuestionnaireRequiredOpen, setIsQuestionnaireRequiredOpen] = useState(false);
   const { subscription, userData, fetchProfile, setUserData } = useCabinetStore();
   const { logout } = useAppStore();
 
@@ -47,6 +54,7 @@ export default function CabinetPage() {
   const TERMINAL_STATUSES = ["REJECTED", "REFUNDED", "REVERSED"];
   const PAYMENT_POLL_INTERVAL_MS = 8000;
   const PAYMENT_POLL_MAX_ATTEMPTS = 20;
+  const successPaymentToastShownRef = useRef(false);
 
   const fetchPaymentStatus = useCallback(async () => {
     if (!orderId?.trim()) return;
@@ -70,7 +78,7 @@ export default function CabinetPage() {
 
   useEffect(() => {
     if (subscriptionActivatedParam && successParam) {
-      setPaymentStatus({ type: "subscription", subscriptionActivated: true });
+      setPaymentStatus({ status: "CONFIRMED", type: "subscription", subscriptionActivated: true });
       fetchProfile().catch(() => {});
       return;
     }
@@ -96,6 +104,26 @@ export default function CabinetPage() {
 
   const { isFetchingProfile, fetchProfileError } = useCabinetStore();
   const questionnaireCompleted = userData?.questionnaireCompleted ?? false;
+  const subscribeHandledRef = useRef(false);
+
+  useEffect(() => {
+    const subscribe = searchParams.get("subscribe") === "1";
+    const durationId = searchParams.get("durationId");
+    if (!subscribe || !durationId || subscribeHandledRef.current || !userData) return;
+    subscribeHandledRef.current = true;
+    fetchTariffs().then((tariffs) => {
+      const tariff = tariffs.find((t) => t.id === durationId);
+      if (!tariff) return;
+      router.replace("/cabinet", { scroll: false });
+      if (questionnaireCompleted) {
+        setPurchaseTariff(tariff);
+        setIsPurchaseModalOpen(true);
+      } else {
+        setPendingSubscribeTariff(tariff);
+        setIsQuestionnaireRequiredOpen(true);
+      }
+    });
+  }, [searchParams, userData, questionnaireCompleted, router]);
 
   useEffect(() => {
     if (!userData && !isFetchingProfile && !fetchProfileError) {
@@ -150,6 +178,24 @@ export default function CabinetPage() {
 
   const { addToast } = useToastStore();
 
+  useEffect(() => {
+    if (!successParam || !paymentStatus || successPaymentToastShownRef.current) return;
+    const done =
+      (paymentStatus.type === "subscription" && paymentStatus.subscriptionActivated) ||
+      (paymentStatus.type === "gift" && paymentStatus.giftCode);
+    if (!done) return;
+    successPaymentToastShownRef.current = true;
+    addToast({
+      type: "success",
+      message:
+        paymentStatus.type === "subscription"
+          ? "Оплата получена. Подписка активна."
+          : `Оплата получена. Промокод: ${paymentStatus.giftCode}`,
+      duration: 5000,
+    });
+    router.replace("/cabinet", { scroll: false });
+  }, [successParam, paymentStatus, addToast, router]);
+
   const handleQuestionnaireComplete = () => {
     if (userData) {
       setUserData({ ...userData, questionnaireCompleted: true });
@@ -160,11 +206,24 @@ export default function CabinetPage() {
       message: "Анкетирование успешно завершено! Теперь вы можете оформить подписку.",
       duration: 4000,
     });
-    setIsSubscriptionModalOpen(true);
+    if (pendingSubscribeTariff) {
+      setPurchaseTariff(pendingSubscribeTariff);
+      setPendingSubscribeTariff(null);
+      setIsPurchaseModalOpen(true);
+    } else {
+      setIsSubscriptionModalOpen(true);
+    }
   };
 
+  const successPaymentDone =
+    paymentStatus?.type === "subscription"
+      ? paymentStatus?.subscriptionActivated
+      : paymentStatus?.type === "gift"
+        ? Boolean(paymentStatus?.giftCode)
+        : false;
   const showPaymentBanner =
-    (orderId != null && (successParam || failParam)) || (successParam && subscriptionActivatedParam);
+    (successParam && subscriptionActivatedParam) ||
+    (orderId != null && (failParam || (successParam && !successPaymentDone)));
   const giftCode = paymentStatus?.type === "gift" ? paymentStatus.giftCode : undefined;
 
   const handleGiftCodeCopy = async () => {
@@ -357,12 +416,7 @@ export default function CabinetPage() {
                   Ваша подписка
                 </h3>
                 <p className="text-xs sm:text-sm text-[var(--foreground)]/70">
-                  {subscription.duration.name} • Следующее списание:{" "}
-                  {new Date(subscription.nextPaymentDate).toLocaleDateString("ru-RU", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {subscription.duration.name}
                 </p>
               </div>
             </div>
@@ -452,9 +506,24 @@ export default function CabinetPage() {
         )}
       </div>
 
+      <QuestionnaireRequiredModal
+        isOpen={isQuestionnaireRequiredOpen}
+        onClose={() => {
+          setIsQuestionnaireRequiredOpen(false);
+          setPendingSubscribeTariff(null);
+        }}
+        onOpenQuestionnaire={() => {
+          setIsQuestionnaireRequiredOpen(false);
+          setIsQuestionnaireOpen(true);
+        }}
+      />
+
       <QuestionnaireModal
         isOpen={isQuestionnaireOpen}
-        onClose={() => setIsQuestionnaireOpen(false)}
+        onClose={() => {
+          setIsQuestionnaireOpen(false);
+          setPendingSubscribeTariff(null);
+        }}
         onComplete={handleQuestionnaireComplete}
       />
 
@@ -467,6 +536,27 @@ export default function CabinetPage() {
           setIsQuestionnaireOpen(true);
         }}
       />
+
+      {purchaseTariff && (
+        <SubscriptionPurchaseModal
+          isOpen={isPurchaseModalOpen}
+          onClose={() => {
+            setIsPurchaseModalOpen(false);
+            setPurchaseTariff(null);
+          }}
+          tariff={{
+            id: purchaseTariff.id,
+            title: purchaseTariff.title,
+            price: purchaseTariff.price,
+            priceNumeric: purchaseTariff.priceNumeric,
+          }}
+          onSuccess={async () => {
+            await fetchProfile();
+            setIsPurchaseModalOpen(false);
+            setPurchaseTariff(null);
+          }}
+        />
+      )}
 
       <Modal
         isOpen={isLogoutModalOpen}
