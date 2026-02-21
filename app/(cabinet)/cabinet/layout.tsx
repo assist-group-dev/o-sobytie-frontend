@@ -153,7 +153,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 pt-24 sm:pt-32 lg:pt-24 xl:pt-48 min-[1536px]:pt-64 min-[1920px]:pt-48 pb-4 sm:pb-6">
+      <div className="container mx-auto px-4 pt-20 sm:pt-24 lg:pt-24 xl:pt-36 min-[1536px]:pt-40 min-[1920px]:pt-36 pb-4 sm:pb-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row lg:items-start gap-4 sm:gap-6">
             <aside
@@ -240,7 +240,7 @@ function CabinetLayoutContent({ children }: CabinetLayoutProps) {
             </div>
           </aside>
 
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 -mt-2 lg:-mt-4">
             {children}
           </main>
         </div>
