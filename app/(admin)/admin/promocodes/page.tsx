@@ -155,6 +155,21 @@ export default function PromocodesPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/admin/promocodes/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete");
+      addToast({ type: "success", message: "Промокод удалён" });
+      setSelectedPromocode(null);
+      setIsDetailModalOpen(false);
+      fetchPromocodes();
+    } catch {
+      addToast({ type: "error", message: "Ошибка удаления промокода" });
+    }
+  };
+
   const columns = [
     { key: "code", label: "Код", sortable: true },
     { key: "premiumLevelName", label: "Тариф", sortable: true },
@@ -311,6 +326,7 @@ export default function PromocodesPage() {
         onClose={() => setIsDetailModalOpen(false)}
         promocode={selectedPromocode}
         onToggleActive={handleToggleActive}
+        onDelete={handleDelete}
       />
     </div>
   );

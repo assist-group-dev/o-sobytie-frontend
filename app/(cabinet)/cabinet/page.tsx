@@ -34,6 +34,7 @@ export default function CabinetPage() {
   const orderId = searchParams.get("orderId") ?? undefined;
   const successParam = searchParams.get("success") === "1";
   const failParam = searchParams.get("fail") === "1";
+  const subscriptionActivatedParam = searchParams.get("subscriptionActivated") === "1";
 
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResult | null>(null);
   const [paymentStatusLoading, setPaymentStatusLoading] = useState(false);
@@ -68,10 +69,15 @@ export default function CabinetPage() {
   }, [orderId]);
 
   useEffect(() => {
+    if (subscriptionActivatedParam && successParam) {
+      setPaymentStatus({ type: "subscription", subscriptionActivated: true });
+      fetchProfile().catch(() => {});
+      return;
+    }
     if (orderId && (successParam || failParam)) {
       fetchPaymentStatus();
     }
-  }, [orderId, successParam, failParam, fetchPaymentStatus]);
+  }, [orderId, successParam, failParam, subscriptionActivatedParam, fetchPaymentStatus, fetchProfile]);
 
   useEffect(() => {
     if (!orderId || !successParam || !paymentStatus || paymentPollStopped) return;
@@ -157,7 +163,8 @@ export default function CabinetPage() {
     setIsSubscriptionModalOpen(true);
   };
 
-  const showPaymentBanner = orderId != null && (successParam || failParam);
+  const showPaymentBanner =
+    (orderId != null && (successParam || failParam)) || (successParam && subscriptionActivatedParam);
   const giftCode = paymentStatus?.type === "gift" ? paymentStatus.giftCode : undefined;
 
   const handleGiftCodeCopy = async () => {

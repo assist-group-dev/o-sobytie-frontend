@@ -1,9 +1,11 @@
 "use client";
 
-import { Power, PowerOff } from "lucide-react";
+import { useState } from "react";
+import { Power, PowerOff, Trash2 } from "lucide-react";
 import { Modal } from "@/ui/components/Modal";
 import { Card } from "@/ui/components/Card";
 import { Button } from "@/ui/components/Button";
+import { ConfirmModal } from "@/app/(admin)/components/ConfirmModal";
 import { cn } from "@/utils/cn";
 import type { PromocodeFromApi } from "@/app/(admin)/admin/promocodes/page";
 
@@ -12,6 +14,7 @@ interface PromocodeDetailModalProps {
   onClose: () => void;
   promocode: PromocodeFromApi | null;
   onToggleActive?: (id: string, isActive: boolean) => void;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 export function PromocodeDetailModal({
@@ -19,12 +22,22 @@ export function PromocodeDetailModal({
   onClose,
   promocode,
   onToggleActive,
+  onDelete,
 }: PromocodeDetailModalProps) {
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   if (!promocode) return null;
 
   const handleToggle = () => {
     if (onToggleActive) {
       onToggleActive(promocode.id, !promocode.isActive);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (onDelete) {
+      await onDelete(promocode.id);
+      setIsDeleteConfirmOpen(false);
+      onClose();
     }
   };
 
@@ -113,8 +126,8 @@ export function PromocodeDetailModal({
           </Card>
         </div>
 
-        {onToggleActive && promocode.type === "admin" && (
-          <div className="mt-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20">
+        <div className="mt-6 pt-6 border-t border-[var(--color-cream)]/30 dark:border-[var(--color-cream)]/20 flex flex-wrap gap-3">
+          {onToggleActive && promocode.type === "admin" && (
             <Button
               type="button"
               variant="outline"
@@ -138,9 +151,30 @@ export function PromocodeDetailModal({
                 </>
               )}
             </Button>
-          </div>
-        )}
+          )}
+          {onDelete && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteConfirmOpen(true)}
+              className="flex items-center justify-center gap-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4" />
+              Удалить
+            </Button>
+          )}
+        </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Удалить промокод?"
+        message="Промокод станет неактивным. Скидка будет снята у всех пользователей, которые его применили."
+        confirmText="Удалить"
+        variant="danger"
+      />
     </Modal>
   );
 }

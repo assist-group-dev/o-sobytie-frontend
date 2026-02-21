@@ -124,7 +124,16 @@ export function SubscriptionPurchaseModal({
         const err = (await response.json()) as { message?: string };
         throw new Error(err.message ?? "Ошибка оформления подписки");
       }
-      const data = (await response.json()) as { paymentURL: string; orderId: string };
+      const data = (await response.json()) as {
+        paymentURL?: string;
+        orderId: string;
+        subscriptionActivated?: boolean;
+      };
+      if (data.subscriptionActivated === true) {
+        const frontendUrl = typeof window !== "undefined" ? window.location.origin : "";
+        window.location.href = `${frontendUrl}/cabinet?success=1&subscriptionActivated=1`;
+        return;
+      }
       if (data.paymentURL) {
         window.location.href = data.paymentURL;
         return;
