@@ -8,6 +8,8 @@ import { Copy, Download, Check } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { API_BASE_URL, fetchWithAuth } from "@/utils/backend";
 
+const GIFT_GUEST_EMAIL_KEY = "gift_guest_email";
+
 function GiftPaymentSuccessContent() {
   const searchParams = useSearchParams();
   const successParam = searchParams.get("success") === "1";
@@ -24,10 +26,15 @@ function GiftPaymentSuccessContent() {
     if (!orderId?.trim()) return;
     setLoading(true);
     setError(null);
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const guestEmail = typeof window !== "undefined" ? sessionStorage.getItem(GIFT_GUEST_EMAIL_KEY) : null;
+    const statusUrl =
+      token != null
+        ? `${API_BASE_URL}/payments/status?orderId=${encodeURIComponent(orderId.trim())}`
+        : `${API_BASE_URL}/payments/status?orderId=${encodeURIComponent(orderId.trim())}&email=${encodeURIComponent(guestEmail ?? "")}`;
     try {
-      const response = await fetchWithAuth(
-        `${API_BASE_URL}/payments/status?orderId=${encodeURIComponent(orderId.trim())}`
-      );
+      const response =
+        token != null ? await fetchWithAuth(statusUrl) : await fetch(statusUrl, { credentials: "include" });
       if (!response.ok) {
         if (response.status === 404) setError("Платёж не найден");
         else setError("Ошибка загрузки статуса");
@@ -41,6 +48,14 @@ function GiftPaymentSuccessContent() {
       if (data.type === "gift" && data.giftPromocodeCreated && data.giftCode) {
         setCode(data.giftCode);
         setModalOpen(true);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.removeItem(GIFT_GUEST_EMAIL_KEY);
+            sessionStorage.removeItem("gift_guest_orderId");
+          } catch {
+            // ignore
+          }
+        }
       }
     } catch {
       setError("Ошибка загрузки статуса");
